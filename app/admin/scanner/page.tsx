@@ -145,6 +145,11 @@ export default function ScannerPage() {
                 Home
               </Button>
             </Link>
+            <Link href="/alumni">
+              <Button variant="ghost" size="sm">
+                Alumni
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
