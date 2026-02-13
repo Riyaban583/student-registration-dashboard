@@ -312,6 +312,91 @@ export async function getAllStudents() {
   }
 }
 
+export async function getAllRecruitments() {
+  try {
+    await connectToDatabase();
+    const students = await Students.find({}).sort({ name: 1 });
+
+    return {
+      success: true,
+      students: students.map((student) => ({
+        id: student._id.toString(),
+        name: student.name,
+        email: student.email,
+        rollNumber: student.rollNumber,
+        universityRollNo: student.universityRollNo,
+        branch: student.branch,
+        year: student.year,
+        eventName: student.eventName,
+        phoneNumber: student.phoneNumber,
+        qrCode: student.qrCode,
+        attendance: student.attendance,
+        cgpa: student.cgpa,
+        back: student.back,
+        summary: student.summary,
+        clubs: student.clubs,
+        aim: student.aim,
+        believe: student.believe,
+        expect: student.expect,
+        domain: student.domain || [],
+        review: student.review,
+        comment: student.comment,
+        roundOneAttendance: student.roundOneAttendance,
+        roundTwoAttendance: student.roundTwoAttendance,
+        roundOneQualified: student.roundOneQualified,
+        roundTwoQualified: student.roundTwoQualified,
+        createdAt: student.createdAt,
+      })),
+    };
+  } catch (error) {
+    console.error('Error fetching recruitment students:', error);
+    return { success: false, error: 'Failed to fetch recruitment students' };
+  }
+}
+
+export async function review(data: {
+  studentId: string;
+  review?: number | string | null;
+  comment?: string;
+  roundOneAttendance?: boolean;
+  roundTwoAttendance?: boolean;
+  roundOneQualified?: boolean;
+  roundTwoQualified?: boolean;
+}) {
+  try {
+    await connectToDatabase();
+
+    const student = await Students.findById(data.studentId);
+    if (!student) {
+      return { success: false, error: 'Student not found' };
+    }
+
+    let parsedReview: number | null = null;
+    if (data.review !== undefined && data.review !== null && data.review !== '') {
+      const numericReview = Number(data.review);
+      if (Number.isNaN(numericReview) || numericReview < 0 || numericReview > 10) {
+        return { success: false, error: 'Review must be a number between 0 and 10' };
+      }
+      parsedReview = numericReview;
+    }
+
+    student.review = parsedReview;
+    student.comment = data.comment ?? student.comment ?? '';
+    student.roundOneAttendance = Boolean(data.roundOneAttendance);
+    student.roundTwoAttendance = Boolean(data.roundTwoAttendance);
+    student.roundOneQualified = Boolean(data.roundOneQualified);
+    student.roundTwoQualified = Boolean(data.roundTwoQualified);
+
+    await student.save();
+    revalidatePath('/admin/scanner/review');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error reviewing student:', error);
+    return { success: false, error: 'Failed to update student review' };
+  }
+}
+
 export async function adminLogin(username: string, password: string) {
   try {
     // Fixed admin credentials (in a real app, these would be in env variables)
