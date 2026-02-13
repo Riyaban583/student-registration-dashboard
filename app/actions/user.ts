@@ -328,16 +328,16 @@ export async function logout() {
 
 
 export async function registerStudents(studentData:{name:string,email:string,rollNumber:string, universityRollNo:string, eventName:string,branch:string, phoneNumber:string,
-  //new gagan
-   cgpa: string,  
-  back: string,
-  summary: string,
-   clubs: string,
+  //new ga
+  //  cgpa: string,  
+  // back: string,
+  // summary: string,
+  //  clubs: string,
 
-    aim: string,
-  believe: string,
-  expect: string,
-  domain: string[],
+  //   aim: string,
+  // believe: string,
+  // expect: string,
+  // domain: string[],
   //new  end 
 }) { 
   try { 
@@ -421,15 +421,15 @@ export async function getStudentByEmail(email: string) {
         qrCode: user.qrCode,
         attendance: user.attendance,
 
-        //gagan
-        cgpa: user.cgpa,
-    back: user.back,
-    summary: user.summary,
-    clubs: user.clubs,
-    aim: user.aim,
-    believe: user.believe,
-    expect: user.expect,
-    domain: user.domain,
+        //ga
+    //     cgpa: user.cgpa,
+    // back: user.back,
+    // summary: user.summary,
+    // clubs: user.clubs,
+    // aim: user.aim,
+    // believe: user.believe,
+    // expect: user.expect,
+    // domain: user.domain,
       }
     };
   } catch (error) {
@@ -465,15 +465,15 @@ export async function getStudentById(userId: string) {
         phoneNumber: user.phoneNumber,
         qrCode: user.qrCode,
         attendance: user.attendance,
-        //gagan
-        cgpa: user.cgpa,
-    back: user.back,
-    summary: user.summary,
-    clubs: user.clubs,
-    aim: user.aim,
-    believe: user.believe,
-    expect: user.expect,
-    domain: user.domain,
+        //ga
+    //     cgpa: user.cgpa,
+    // back: user.back,
+    // summary: user.summary,
+    // clubs: user.clubs,
+    // aim: user.aim,
+    // believe: user.believe,
+    // expect: user.expect,
+    // domain: user.domain,
       }
     };
   } catch (error) {
