@@ -49,20 +49,20 @@ const formSchema = z.object({
     .string()
     .min(3, { message: "Roll number must be at least 3 characters" }),
 
-    // new gagan
-      cgpa: z.string().min(1, { message: "CGPA is required" }),
-      back: z.string().min(1, { message: "Back count is required" }),
-      summary: z.string().min(1, { message: "This field is required" }),
-        clubs: z.string().min(1, { message: "Clubs field is required" }),
+    // new ga
+  //     cgpa: z.string().min(1, { message: "CGPA is required" }),
+  //     back: z.string().min(1, { message: "Back count is required" }),
+  //     summary: z.string().min(1, { message: "This field is required" }),
+  //       clubs: z.string().min(1, { message: "Clubs field is required" }),
 
-         aim: z.string().min(2, { message: "Aim is required" }),
-  believe: z.string().min(2, { message: "This field is required" }),
-  expect: z.string().min(2, { message: "This field is required" }),
-  // domain: z.array(z.string()).min(1, { message: "Select at least one domain" }),
-  domain: z
-  .array(z.string())
-  .min(1, { message: "Select at least one domain" })
-  .max(2, { message: "You can select up to 2 domains only" }),
+  //        aim: z.string().min(2, { message: "Aim is required" }),
+  // believe: z.string().min(2, { message: "This field is required" }),
+  // expect: z.string().min(2, { message: "This field is required" }),
+  // // domain: z.array(z.string()).min(1, { message: "Select at least one domain" }),
+  // domain: z
+  // .array(z.string())
+  // .min(1, { message: "Select at least one domain" })
+  // .max(2, { message: "You can select up to 2 domains only" }),
 
      // new end 
 });
@@ -96,15 +96,15 @@ export default function RegisterPage() {
       phoneNumber: "",
       
       //new gagan
-       cgpa: "",           
-    back: "",           
-    summary: "", 
-     clubs: "",
+    //    cgpa: "",           
+    // back: "",           
+    // summary: "", 
+    //  clubs: "",
 
-     aim: "",
-    believe: "",
-    expect: "",
-    domain: [],
+    //  aim: "",
+    // believe: "",
+    // expect: "",
+    // domain: [],
     //new  end
     },
   });
@@ -157,10 +157,10 @@ export default function RegisterPage() {
         </div>
       </header>
 
-      {/* <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+       <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-xl md:text-2xl">Core Team Recruitment</CardTitle>
+            <CardTitle className="text-xl md:text-2xl">ARTICULATE</CardTitle>
             <CardDescription className="text-xs md:text-sm">
               Register Yourself to get your QR code
             </CardDescription>
@@ -300,8 +300,11 @@ export default function RegisterPage() {
                           >
                             <option value="">Select an event</option>
 
-                              <option value="Core Team Recruitment">
+                              {/* <option value="Core Team Recruitment">
                                 Core Team Recruitment
+                              </option> */}
+                              <option value="ARTICULATE">
+                                ARTICULATE
                               </option>
 
                           </select>
@@ -341,7 +344,7 @@ export default function RegisterPage() {
                 />
 
 
-  <FormField
+  {/* <FormField
                   control={form.control}
                   name="cgpa"
                   render={({ field }) => (
@@ -475,7 +478,7 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-
+ */}
 
                 <Button
                   type="submit"
@@ -499,15 +502,15 @@ export default function RegisterPage() {
             </p>
           </CardFooter>
         </Card>
-      </main> */}
+      </main> 
 
-                <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+                {/* <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <Card className="w-full max-w-lg md:max-w-xl lg:max-w-2xl text-center">
           <h1 className="text-xl font-bold">Oop's, It's too Late!!</h1>
           <h3 className="text-lg font-semibold">Registration Closed</h3>
         </Card>
 
-                 </main>
+                 </main> */}
 
       <footer className="border-t py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground flex-col flex items-center">

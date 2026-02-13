@@ -11,14 +11,14 @@ export interface IStudent extends Document {
   year: string;
   phoneNumber: string;
 
-  cgpa: string;
-  back: string;
-  summary: string;
-  clubs: string;
-  aim: string;
-  believe: string;
-  expect: string;
-  domain: string[];
+  // cgpa: string;
+  // back: string;
+  // summary: string;
+  // clubs: string;
+  // aim: string;
+  // believe: string;
+  // expect: string;
+  // domain: string[];
 
   qrCode: string;
 
@@ -91,14 +91,14 @@ const StudentSchema = new Schema<IStudent>(
     },
 
     //new start gagan
-    cgpa: { type: String, required: true, trim: true },
-    back: { type: String, required: true, trim: true },
-    summary: { type: String, required: true, trim: true },
-    clubs: { type: String, required: true, trim: true },
-    aim: { type: String, required: true, trim: true },
-    believe: { type: String, required: true, trim: true },
-    expect: { type: String, required: true, trim: true },
-    domain: { type: [String], required: true, default: [] },
+    // cgpa: { type: String, required: true, trim: true },
+    // back: { type: String, required: true, trim: true },
+    // summary: { type: String, required: true, trim: true },
+    // clubs: { type: String, required: true, trim: true },
+    // aim: { type: String, required: true, trim: true },
+    // believe: { type: String, required: true, trim: true },
+    // expect: { type: String, required: true, trim: true },
+    // domain: { type: [String], required: true, default: [] },
     //new end
 
     qrCode: {

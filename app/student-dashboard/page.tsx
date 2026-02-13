@@ -44,15 +44,15 @@ interface User {
     present: boolean;
   }[];
 
-  // gagan
-  cgpa: string;
-  back: string;
-  summary: string;
-  clubs: string;
-  aim: string;
-  believe: string;
-  expect: string;
-  domain: string[];
+  // ga
+  // cgpa: string;
+  // back: string;
+  // summary: string;
+  // clubs: string;
+  // aim: string;
+  // believe: string;
+  // expect: string;
+  // domain: string[];
 }
 
 export default function DashboardPage() {
@@ -317,9 +317,9 @@ useEffect(() => {
                       </dd>
                     </div>
                   </dl>
-                  {/* new gagan  */}
+                  {/* new ga  */}
 
-          <div>
+          {/* <div>
 
            
       <dt className="font-medium text-muted-foreground mt-2">CGPA</dt>
@@ -363,7 +363,7 @@ useEffect(() => {
           ? user.domain.join(', ')
           : 'N/A'}
       </dd>
-    </div>
+    </div> */}
           {/*  end  */}
 
                 </CardContent>
