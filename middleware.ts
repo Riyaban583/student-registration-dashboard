@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from './lib/auth';
-import { Console } from 'console';
-import Jwt from 'jsonwebtoken';
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    const json = atob(padded);
+
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
   // Get the pathname
@@ -22,7 +34,7 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const decoded = Jwt.decode(token);
+      const decoded = decodeJwtPayload(token);
       // console.log("dedocde token",Jwt.decode(token))
       if (!decoded || (typeof decoded !== 'object' || decoded.role !== 'admin')) {
         // console.log("There might be error",decoded)

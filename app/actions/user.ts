@@ -285,6 +285,33 @@ export async function getAllUsers() {
   }
 }
 
+export async function getAllStudents() {
+  try {
+    await connectToDatabase();
+    const students = await Students.find({}).sort({ name: 1 });
+
+    return {
+      success: true,
+      students: students.map((student) => ({
+        id: student._id.toString(),
+        name: student.name,
+        email: student.email,
+        rollNumber: student.rollNumber,
+        universityRollNo: student.universityRollNo,
+        branch: student.branch,
+        year: student.year,
+        eventName: student.eventName,
+        phoneNumber: student.phoneNumber,
+        attendance: student.attendance,
+        createdAt: student.createdAt,
+      })),
+    };
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    return { success: false, error: 'Failed to fetch students' };
+  }
+}
+
 export async function adminLogin(username: string, password: string) {
   try {
     // Fixed admin credentials (in a real app, these would be in env variables)

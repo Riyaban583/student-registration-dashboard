@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GraduationCap, ArrowLeft, Users, LogOut, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { getAllStudents } from '@/app/actions/user';
+import { getAllStudents, logout } from '@/app/actions/user';
 
 interface Student {
   id: string;
