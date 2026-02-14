@@ -34,13 +34,13 @@ export async function getEvents() {
   try {
     await connectToDatabase();
     const events = await Event.find({}).sort({ createdAt: -1 }).lean();
-    console.log('Event Data with questions:', events.map(e => ({ 
+    console.log('Event Data with questions:', events.map((e: any) => ({ 
       name: e.eventName, 
       questionCount: e.questions?.length || 0 
     })));
     
     // Convert all ObjectIds to strings for proper serialization
-    return events.map(event => {
+    return events.map((event: any) => {
       const serializedEvent: any = {
         ...event,
         _id: event._id.toString(),
@@ -287,7 +287,7 @@ export async function getEventQuestions(eventId: string) {
   try {
     await connectToDatabase();
 
-    const event = await Event.findById(eventId).lean();
+    const event: any = await Event.findById(eventId).lean();
     if (!event) {
       return { success: false, message: 'Event not found' };
     }
@@ -340,7 +340,7 @@ export async function getCurrentQuestion(eventName: string, studentEmail: string
   try {
     await connectToDatabase();
 
-    const event = await Event.findOne({ eventName }).lean();
+    const event: any = await Event.findOne({ eventName }).lean();
     if (!event) {
       return { success: false, message: 'Event not found' };
     }
@@ -385,7 +385,7 @@ export async function getCurrentQuestion(eventName: string, studentEmail: string
     );
 
     if (alreadyAnswered) {
-      return { success: false, message: 'You have already answered this question' };
+      return { success: false, message: 'You have already answered this question', questionId: event.currentQuestionId?.toString() };
     }
 
     // Calculate remaining time
@@ -509,7 +509,7 @@ export async function getQuizLeaderboard(eventId: string) {
   try {
     await connectToDatabase();
 
-    const event = await Event.findById(eventId).lean();
+    const event: any = await Event.findById(eventId).lean();
     if (!event) {
       return { success: false, message: 'Event not found' };
     }

@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { getStudentQuiz, submitQuizResponse } from "@/app/actions/events";
+import { getCurrentQuestion, submitAnswer } from "@/app/actions/events";
 import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,16 +57,8 @@ export default function StudentQuiz({ eventName, studentEmail }: QuizProps) {
 
   async function loadQuiz() {
     setLoading(true);
-    const result = await getStudentQuiz(eventName, studentEmail);
-    
-    if (result.success) {
-      setQuestions(result.questions || []);
-      setEventId(result.eventId || "");
-      setQuestionStartTime(Date.now());
-    } else {
-      setError(result.message || "Failed to load quiz");
-      toast.error(result.message);
-    }
+    // This component is deprecated - use StudentQuizPolling instead
+    setError("This quiz component is no longer in use. Please use the polling-based quiz.");
     setLoading(false);
   }
 
@@ -96,18 +88,8 @@ export default function StudentQuiz({ eventName, studentEmail }: QuizProps) {
   }
 
   async function submitQuiz(finalAnswers: typeof answers) {
-    setLoading(true);
-    const result = await submitQuizResponse(eventId, studentEmail, finalAnswers);
-    
-    if (result.success) {
-      setQuizCompleted(true);
-      setScore(result.score || 0);
-      setTotalQuestions(result.totalQuestions || 0);
-      toast.success("Quiz submitted successfully!");
-    } else {
-      toast.error(result.message || "Failed to submit quiz");
-    }
-    setLoading(false);
+    // This component is deprecated - use StudentQuizPolling instead
+    toast.error("This quiz component is no longer in use.");
   }
 
   if (loading) {
