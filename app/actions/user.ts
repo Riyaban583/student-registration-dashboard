@@ -287,9 +287,15 @@ export async function getAllUsers() {
 
 export async function adminLogin(username: string, password: string) {
   try {
+    console.log('Server: adminLogin called');
+    console.log('Server: Username:', username);
+    
     // Fixed admin credentials (in a real app, these would be in env variables)
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin@rtu';
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'rtu@superadmin@2025';
+    
+    console.log('Server: Expected username:', ADMIN_USERNAME);
+    console.log('Server: Match:', username === ADMIN_USERNAME && password === ADMIN_PASSWORD);
     
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       // Generate JWT token
@@ -299,9 +305,14 @@ export async function adminLogin(username: string, password: string) {
         role: 'admin'
       });
       
+      console.log('Server: Token generated:', token.substring(0, 20) + '...');
+      
       // Set cookie with proper settings for production
       // Check if URL starts with https to determine secure flag
       const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false;
+      
+      console.log('Server: NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
+      console.log('Server: isHttps:', isHttps);
       
       cookies().set({
         name: 'auth-token',
@@ -313,12 +324,15 @@ export async function adminLogin(username: string, password: string) {
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
       
+      console.log('Server: Cookie set successfully');
+      
       return { success: true };
     }
     
+    console.log('Server: Invalid credentials');
     return { success: false, error: 'Invalid credentials' };
   } catch (error) {
-    console.error('Error during admin login:', error);
+    console.error('Server: Error during admin login:', error);
     return { success: false, error: 'Login failed' };
   }
 }

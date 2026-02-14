@@ -22,21 +22,22 @@ const formSchema = z.object({
 });
 
 export default function LoginPage() {
+  const router = useRouter();
   const [token, setToken] = useState("");
 
   useEffect(() => {
     async function fetchToken() {
       const res = await fetch("/api/token");
       const data = await res.json();
+      console.log('Token check:', data.token);
       setToken(data.token);
       if(data.token) {
-        router.push('/admin/scanner');
+        console.log('Token exists, redirecting...');
+        window.location.href = '/admin/scanner';
       }
-
     }
     fetchToken();
   }, []);
-  const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,14 +52,50 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await adminLogin(values.username, values.password);
+      console.log('Attempting login via API...');
+      
+      // Use API route instead of server action for better cookie handling
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: values.username,
+          password: values.password,
+        }),
+        credentials: 'include', // Important for cookies
+      });
+      
+      const result = await response.json();
+      console.log('Login result:', result);
       
       if (result.success) {
         toast({
           title: "Login successful",
-          description: "You have been logged in successfully.",
+          description: "Redirecting to dashboard...",
         });
-        router.push('/admin/scanner');
+        
+        // Wait a moment for cookie to be set
+        console.log('Waiting for cookie to be set...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verify cookie was set
+        const checkToken = await fetch("/api/token", { credentials: 'include' });
+        const tokenData = await checkToken.json();
+        console.log('Token after login:', tokenData.token);
+        
+        if (tokenData.token) {
+          console.log('Cookie verified, redirecting to /admin/scanner');
+          window.location.href = '/admin/scanner';
+        } else {
+          console.error('Cookie was not set! Check server logs.');
+          toast({
+            variant: "destructive",
+            title: "Login issue",
+            description: "Cookie not set. Check server configuration.",
+          });
+        }
       } else {
         toast({
           variant: "destructive",
@@ -67,6 +104,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Login failed",
