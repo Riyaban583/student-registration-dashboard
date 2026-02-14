@@ -23,10 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { GraduationCap, ArrowLeft, Calendar, Download } from "lucide-react";
+import { GraduationCap, ArrowLeft, Calendar, Download, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { getStudentById, getStudentByEmail } from "@/app/actions/user";
 import { useToast } from "@/hooks/use-toast";
+import StudentQuizPolling from "@/components/quiz/StudentQuizPolling";
 
 interface User {
   id: string;
@@ -120,7 +121,7 @@ useEffect(() => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter your roll number",
+        description: "Please enter your email",
       });
       return;
     }
@@ -220,6 +221,18 @@ useEffect(() => {
         ) : user ? (
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6">Student Dashboard</h2>
+
+            {/* Live Quiz Section */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="h-6 w-6 text-yellow-500" />
+                <h3 className="text-xl font-semibold">Live Quiz</h3>
+              </div>
+              <StudentQuizPolling 
+                eventName={user.eventName} 
+                studentEmail={user.email} 
+              />
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               {/* <Card>

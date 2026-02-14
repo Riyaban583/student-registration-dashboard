@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
 import {Html5QrcodeScanner} from 'html5-qrcode';
 import EventManager from '@/components/event/Events';
+import QuizManager from '@/components/quiz/QuizManager';
 export default function ScannerPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -305,6 +306,8 @@ export default function ScannerPage() {
           </div>
 
           <EventManager />
+          
+          <QuizManager />
           
           <Tabs value="all">
             <TabsList className="mb-4">
