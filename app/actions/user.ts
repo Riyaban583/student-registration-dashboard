@@ -299,13 +299,17 @@ export async function adminLogin(username: string, password: string) {
         role: 'admin'
       });
       
-      // Set cookie
+      // Set cookie with proper settings for production
+      // Check if URL starts with https to determine secure flag
+      const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false;
+      
       cookies().set({
         name: 'auth-token',
         value: token,
         httpOnly: true,
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: isHttps, // Only secure if using HTTPS
+        sameSite: 'lax', // Important for cross-origin requests
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
       
