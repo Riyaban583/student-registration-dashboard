@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         response.cookies.set({
           name: 'auth-token',
           value: token,
-          httpOnly: false, // Allow JavaScript access as fallback
+          httpOnly: true, // Allow JavaScript access as fallback
           secure: false,
           sameSite: 'lax',
           path: '/',
