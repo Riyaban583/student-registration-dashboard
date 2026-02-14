@@ -13,34 +13,44 @@ export async function POST(request: NextRequest) {
     console.log('API: Expected username:', ADMIN_USERNAME);
     
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      console.log('API: Credentials match! Generating token...');
+      console.log('API: JWT_SECRET exists:', !!process.env.JWT_SECRET);
+      console.log('API: JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
+      
       const token = generateToken({ 
         id: 'admin',
         username,
         role: 'admin'
       });
       
-      console.log('API: Token generated:', token.substring(0, 20) + '...');
+      console.log('API: Token generated successfully');
+      console.log('API: Token length:', token?.length || 0);
+      console.log('API: Token preview:', token ? token.substring(0, 30) + '...' : 'NULL/EMPTY');
       console.log('API: NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
       
-      // Create response
-      const response = NextResponse.json({ success: true });
-      
-      // Set cookie with proper settings for HTTP
-      const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false;
-      
-      console.log('API: Setting cookie with secure:', isHttps);
-      
-      response.cookies.set({
-        name: 'auth-token',
-        value: token,
-        httpOnly: true,
-        secure: isHttps,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+      // Create response with token in body
+      const response = NextResponse.json({ 
+        success: true,
+        token: token // Return token in response body
       });
       
-      console.log('API: Cookie set in response');
+      // Try to set cookie (may not work on some IP addresses)
+      console.log('API: Attempting to set cookie for HTTP');
+      
+      try {
+        response.cookies.set({
+          name: 'auth-token',
+          value: token,
+          httpOnly: false, // Allow JavaScript access as fallback
+          secure: false,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 7,
+        });
+        console.log('API: Cookie set in response');
+      } catch (e) {
+        console.log('API: Cookie setting failed:', e);
+      }
       
       return response;
     }

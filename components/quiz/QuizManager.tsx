@@ -297,12 +297,17 @@ export default function QuizManager() {
                       </DialogTrigger>
                       <DialogContent className="max-w-6xl h-[90vh] overflow-hidden flex flex-col p-0">
                         <DialogHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-lg mb-0 flex-shrink-0">
-                          <DialogTitle className="flex items-center gap-2 text-white text-2xl">
-                            <Trophy className="h-7 w-7 text-yellow-300" />
-                            Leaderboard - {event.eventName}
+                          <DialogTitle className="flex items-center justify-between text-white text-2xl">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="h-7 w-7 text-yellow-300" />
+                              Leaderboard - {event.eventName}
+                            </div>
+                            <Badge className="bg-white text-indigo-600 text-lg px-3 py-1">
+                              {leaderboard.length} Students
+                            </Badge>
                           </DialogTitle>
                           <DialogDescription className="text-white/90 text-base mt-2">
-                            Real-time rankings based on score and speed
+                            Real-time rankings based on score and speed • Scroll to see all students
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex-1 overflow-y-auto px-6 pb-6 scroll-smooth">

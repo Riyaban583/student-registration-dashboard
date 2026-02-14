@@ -52,7 +52,9 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      console.log('Attempting login via API...');
+      console.log('=== LOGIN ATTEMPT ===');
+      console.log('Username:', values.username);
+      console.log('Fetching from:', window.location.origin + '/api/login');
       
       // Use API route instead of server action for better cookie handling
       const response = await fetch('/api/login', {
@@ -67,36 +69,45 @@ export default function LoginPage() {
         credentials: 'include', // Important for cookies
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
       const result = await response.json();
       console.log('Login result:', result);
       
       if (result.success) {
+        console.log('✅ Login successful!');
+        console.log('Token received:', result.token ? 'YES' : 'NO');
+        
+        // Store token in localStorage as backup
+        if (result.token) {
+          console.log('Storing token in localStorage');
+          localStorage.setItem('auth-token', result.token);
+          
+          // Manually set cookie using JavaScript (fallback for IP addresses)
+          console.log('Manually setting cookie via JavaScript');
+          document.cookie = `auth-token=${result.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          
+          console.log('Cookie set! Value:', document.cookie);
+        }
+        
         toast({
           title: "Login successful",
           description: "Redirecting to dashboard...",
         });
         
-        // Wait a moment for cookie to be set
-        console.log('Waiting for cookie to be set...');
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Check if cookie was set
+        console.log('All cookies after manual set:', document.cookie);
         
-        // Verify cookie was set
-        const checkToken = await fetch("/api/token", { credentials: 'include' });
-        const tokenData = await checkToken.json();
-        console.log('Token after login:', tokenData.token);
-        
-        if (tokenData.token) {
-          console.log('Cookie verified, redirecting to /admin/scanner');
+        // Force redirect after short delay
+        console.log('Redirecting to /admin/scanner in 1 second...');
+        setTimeout(() => {
+          console.log('Executing redirect now...');
           window.location.href = '/admin/scanner';
-        } else {
-          console.error('Cookie was not set! Check server logs.');
-          toast({
-            variant: "destructive",
-            title: "Login issue",
-            description: "Cookie not set. Check server configuration.",
-          });
-        }
+        }, 1000);
+        
       } else {
+        console.log('❌ Login failed:', result.error);
         toast({
           variant: "destructive",
           title: "Login failed",
@@ -104,7 +115,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       toast({
         variant: "destructive",
         title: "Login failed",
