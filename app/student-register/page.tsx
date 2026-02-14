@@ -178,7 +178,7 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Divyanshu Sharma" {...field} />
+                        <Input placeholder="Student Name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder="divyanshu@gmail.com"
+                          placeholder="student@gmail.com"
                           {...field}
                         />
                       </FormControl>
