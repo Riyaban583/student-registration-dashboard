@@ -130,6 +130,9 @@ export default function Home() {
             <Link href="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">Admin Access</Button>
             </Link>
+             <Link href="/quizzes">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">Attempt Quiz</Button>
+            </Link>
           </div>
         </section>
 
