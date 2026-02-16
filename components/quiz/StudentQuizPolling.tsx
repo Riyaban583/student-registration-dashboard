@@ -339,7 +339,7 @@ export default function StudentQuizPolling({ eventName, studentEmail }: StudentQ
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <h3 className="text-2xl font-bold text-slate-900 leading-relaxed">
+          <h3 className="text-xl font-bold text-slate-900 leading-relaxed">
             {question.question}
           </h3>
 
@@ -362,7 +362,7 @@ export default function StudentQuizPolling({ eventName, studentEmail }: StudentQ
                   }`}>
                     {String.fromCharCode(65 + index)}
                   </div>
-                  <span className={`text-lg font-medium flex-1 ${
+                  <span className={`text-base font-medium flex-1 ${
                     selectedAnswer === index ? "text-indigo-900" : "text-slate-900"
                   }`}>
                     {option}

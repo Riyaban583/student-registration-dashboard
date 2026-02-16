@@ -27,8 +27,8 @@ export const reminderEmailTemplate = (
             This is a gentle reminder for the event <strong>${eventName}</strong>.
           </p>
           <p style="font-size: 15px; color: #555;">
-            <strong>📍 Venue:</strong> ${venue} <br/>
-            <strong>🕒 Time:</strong> ${time}
+            <strong>📍 Venue:</strong> PTP Hall, PNB Building <br/>
+            <strong>🕒 Time:</strong> 2:30 PM
           </p>
   
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />

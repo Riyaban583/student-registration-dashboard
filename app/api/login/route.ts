@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
           value: token,
           httpOnly: true, // Allow JavaScript access as fallback
           secure: false,
-          sameSite: 'lax',
           path: '/',
           maxAge: 60 * 60 * 24 * 7,
         });
