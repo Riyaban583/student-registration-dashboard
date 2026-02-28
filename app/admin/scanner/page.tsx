@@ -145,6 +145,12 @@ export default function ScannerPage() {
                 Home
               </Button>
             </Link>
+             <Link href="/admin/quiz-management">
+              <Button variant="ghost" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Quiz Manage
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
