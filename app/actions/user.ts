@@ -6,10 +6,10 @@ import Students from '@/models/Students';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { generateToken } from '@/lib/auth';
-import { any } from 'zod';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
+import { toZonedTime, format } from "date-fns-tz";
 
 export async function registerUser(userData: { name: string; email: string; rollNumber: string }) {
   try {
@@ -37,7 +37,8 @@ export async function registerUser(userData: { name: string; email: string; roll
     // Create new user
     const newUser = new User({
       ...userData,
-      qrCode: qrCodeUrl
+      qrCode: qrCodeUrl,
+      scanId: userId
     });
 
     await newUser.save();
@@ -61,7 +62,7 @@ export async function getUserById(userId: string) {
   try {
     await connectToDatabase();
     // const user = await User.findById(userId);
-    const user = await User.findById(userId) || await Students.findById(userId);
+    const user = (await User.findById(userId).lean() || await Students.findById(userId).lean()) as any;
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -90,7 +91,7 @@ export async function getUserById(userId: string) {
 export async function getUserByRollNumber(rollNumber: string) {
   try {
     await connectToDatabase();
-    const user = await User.findOne({ rollNumber });
+    const user = await User.findOne({ rollNumber }).lean() as any;
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -185,11 +186,11 @@ export async function getUserByRollNumber(rollNumber: string) {
 // }
 
 
-import { toZonedTime, format } from "date-fns-tz";
-import { QrCode } from 'lucide-react';
-import { yearsToDays } from 'date-fns';
-
 const indiaTimeZone = "Asia/Kolkata"; // IST
+
+function escapeRegex(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export async function markAttendance(userId: string) {
   try {
@@ -204,14 +205,24 @@ export async function markAttendance(userId: string) {
       return { success: false, error: 'Unauthorized access' };
     }
 
-    let user = await User.findOne({
-      qrCode: { $regex: new RegExp(`/scan/${userId}$`, 'i') }
-    });
+    // Security Fix: Use exact match on scanId to avoid regex injection
+    let user = await User.findOne({ scanId: userId });
 
     if (!user) {
-      user = await Students.findOne({
-        qrCode: { $regex: new RegExp(`/scan/${userId}$`, 'i') }
+      user = await Students.findOne({ scanId: userId });
+    }
+
+    // Fallback for old records without scanId (using escaped regex)
+    if (!user) {
+      const escapedId = escapeRegex(userId);
+      user = await User.findOne({
+        qrCode: { $regex: new RegExp(`/scan/${escapedId}$`, 'i') }
       });
+      if (!user) {
+        user = await Students.findOne({
+          qrCode: { $regex: new RegExp(`/scan/${escapedId}$`, 'i') }
+        });
+      }
     }
 
     if (!user) {
@@ -371,7 +382,8 @@ export async function registerStudents(studentData: {
     // Create new user
     const newUser = new Students({
       ...studentData,
-      qrCode: qrCodeUrl // Assuming qrCode is a field in the User model 
+      qrCode: qrCodeUrl,
+      scanId: userId
     });
 
     await newUser.save();
@@ -405,7 +417,7 @@ export async function registerStudents(studentData: {
 export async function getStudentByEmail(email: string) {
   try {
     await connectToDatabase();
-    const user = await Students.findOne({ email });
+    const user = await Students.findOne({ email }).lean() as any;
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -443,7 +455,7 @@ export async function getStudentById(userId: string) {
   try {
     await connectToDatabase();
     // const user = await User.findById(userId);
-    const user = await Students.findById(userId);
+    const user = await Students.findById(userId).lean() as any;
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -554,10 +566,3 @@ export const review = async (data: ReviewData) => {
   }
 }
 
-export const getstudentdetail = (data: ReviewData) => {
-  try {
-
-  } catch (error) {
-
-  }
-}

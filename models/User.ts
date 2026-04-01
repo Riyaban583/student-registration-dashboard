@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   rollNumber: string;
   qrCode: string;
+  scanId: string;
   attendance: {
     date: Date;
     present: boolean;
@@ -36,6 +37,12 @@ const UserSchema = new Schema<IUser>(
     qrCode: {
       type: String,
       unique: true,
+    },
+    scanId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
     },
     attendance: [
       {

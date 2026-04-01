@@ -21,6 +21,7 @@ export interface IStudent extends Document {
   // domain: string[];
 
   qrCode: string;
+  scanId: string;
 
   attendance: { 
     date: Date;
@@ -105,6 +106,12 @@ const StudentSchema = new Schema<IStudent>(
       type: String,
       unique: true,
       required: [true, 'QR Code is required'],
+    },
+    scanId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
     },
 
     attendance: [

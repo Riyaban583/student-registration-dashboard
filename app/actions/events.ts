@@ -6,12 +6,12 @@ import Students from '@/models/Students'
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { generateToken } from '@/lib/auth';
-import { any } from 'zod';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
 import { AttendanceTemplate } from "@/mail/StudentAttendanceMail";
 import { reminderEmailTemplate } from "@/mail/Remind";
+import { toZonedTime, format } from "date-fns-tz";
 
 
 
@@ -31,7 +31,7 @@ export async function createEvent(eventName: string, eventDate: string) {
     
   } catch (error) {
     console.error("Error creating event:", error);
-
+    return { success: false, error: 'Failed to create event' };
   }
 }
 
@@ -44,6 +44,7 @@ export async function getEvents() {
     return JSON.parse(JSON.stringify(events));
   } catch (error) {
     console.error("Error fetching events:", error);
+    return [];
   }
 }
 
@@ -64,31 +65,36 @@ export async function deleteEvent(id: string) {
     }));
   } catch (error) {
     console.error("Error deleting event:", error);
+    return { success: false, error: 'Failed to delete event' };
   }
 }
 
 
 
-import { toZonedTime, format } from "date-fns-tz";
-import { QrCode } from 'lucide-react';
-import { yearsToDays } from 'date-fns';
-import { eventNames } from "process";
-
 const indiaTimeZone = "Asia/Kolkata"; // IST
+
+function escapeRegex(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export async function markStudentAttendence(userId: string) {
   try {
     await connectToDatabase();
  
 
-    let user = await Students.findOne({
-      qrCode: { $regex: new RegExp(`/scan/${userId}$`, 'i') }
-    });
+    // Security Fix: Use exact match on scanId to avoid regex injection
+    let user = await Students.findOne({ scanId: userId });
 
+    // Fallback for old records without scanId (using escaped regex)
+    if (!user) {
+      const escapedId = escapeRegex(userId);
+      user = await Students.findOne({
+        qrCode: { $regex: new RegExp(`/scan/${escapedId}$`, 'i') }
+      });
+    }
 
-    if(!user){
+    if (!user) {
       return { success: false, error: 'User not found' };
-
     }
 
     // ✅ Convert today's date to IST (without time)

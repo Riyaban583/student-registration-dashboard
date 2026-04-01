@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,25 +12,18 @@ import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRi
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
-import { Html5Qrcode } from 'html5-qrcode';
 import EventManager from '@/components/event/Events';
+import { useQrScanner } from '@/hooks/useQrScanner';
+import { QrScannerCard } from '@/components/scanner/QrScannerCard';
+
 export default function ScannerPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<null | { success: boolean; message: string; user?: any }>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scannerSupported, setScannerSupported] = useState(true);
 
-
-  const handleScan = async (decodedText: string) => {
-    if (!decodedText) return;
-    
-    // Diagnostic logging
-    console.log("Scanner Detected Text:", decodedText);
-
+  const handleScanProcess = useCallback(async (decodedText: string) => {
     try {
       let userId = "";
       const text = decodedText.trim();
@@ -51,10 +44,8 @@ export default function ScannerPage() {
 
       if (!userId || userId.length < 5) {
         console.warn("Extracted ID looks invalid:", userId);
-        return; // Don't stop scanning yet
+        return;
       }
-
-      setScanning(false); // Success! Stop camera
 
       const attendanceResult = await markAttendance(userId);
       setScanResult({
@@ -69,13 +60,18 @@ export default function ScannerPage() {
         const usersResult = await getAllUsers();
         if (usersResult.success) setUsers(usersResult.users || []);
       } else {
-        throw new Error(attendanceResult.error || "Failed to mark attendance");
+        toast({ variant: "destructive", title: "Scan Error", description: attendanceResult.error });
       }
     } catch (error: any) {
       console.error("Scan processing error:", error);
       toast({ variant: "destructive", title: "Scan Error", description: error.message });
     }
-  };
+  }, [toast]);
+
+  const { scanning, setScanning, scanResult, setScanResult } = useQrScanner({
+    onScan: handleScanProcess
+  });
+
   useEffect(() => {
     async function fetchUsers() {
       try {
@@ -98,71 +94,6 @@ export default function ScannerPage() {
     fetchUsers();
   }, [toast]);
 
-  useEffect(() => {
-    let html5QrCode: Html5Qrcode | null = null;
-    let isMounted = true;
-
-    if (scanning) {
-      const startScanner = async () => {
-        try {
-          // Add a small delay to ensure DOM element is ready
-          await new Promise(resolve => setTimeout(resolve, 100));
-          if (!isMounted) return;
-
-          html5QrCode = new Html5Qrcode("qr-reader");
-          const config = { 
-            fps: 20, 
-            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-              const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-              const qrboxSize = Math.floor(minEdgeSize * 0.7);
-              return {
-                  width: qrboxSize,
-                  height: qrboxSize
-              };
-            },
-            aspectRatio: 1.0 
-          };
-
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            handleScan,
-            () => {}
-          );
-        } catch (err) {
-          console.error("Unable to start scanning", err);
-          if (isMounted) {
-            toast({
-              variant: "destructive",
-              title: "Scanner Error",
-              description: "Could not access camera. Please ensure permissions are granted.",
-            });
-            setScanning(false);
-          }
-        }
-      };
-
-      startScanner();
-
-      return () => {
-        isMounted = false;
-        if (html5QrCode && html5QrCode.isScanning) {
-          html5QrCode.stop().catch(err => console.warn("Error stopping scanner:", err));
-        }
-      };
-    }
-  }, [scanning]);
-
-  const handleError = (err: any) => {
-    console.error(err);
-    toast({
-      variant: "destructive",
-      title: "Scanner Error",
-      description: "Could not access camera or scanner encountered an error",
-    });
-    setScanning(false);
-  };
-
   const handleLogout = async () => {
     await logout();
     router.push('/login');
@@ -184,17 +115,6 @@ export default function ScannerPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <style dangerouslySetInnerHTML={{ __html: `
-        #qr-reader video {
-          width: 100% !important;
-          height: 100% !important;
-          object-fit: cover !important;
-          border-radius: 8px !important;
-        }
-        #qr-reader {
-          border: none !important;
-        }
-      `}} />
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -259,37 +179,11 @@ export default function ScannerPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>QR Scanner</CardTitle>
-                <CardDescription>Scan student QR codes to mark attendance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {scanning ? (
-                  <div>
-                    <div id="qr-reader" className="w-full aspect-square relative overflow-hidden rounded-lg border-2 border-primary bg-black shadow-lg mx-auto max-w-sm" />
-                    <Button variant="outline" className="w-full mt-4" onClick={() => setScanning(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    {scanResult && (
-                      <Alert variant={scanResult.success ? "default" : "destructive"} className="mb-4">
-                        {scanResult.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
-                        <AlertTitle>{scanResult.success ? "Success" : "Error"}</AlertTitle>
-                        <AlertDescription>{scanResult.message}</AlertDescription>
-                      </Alert>
-                    )}
-                    <Button className="w-full" onClick={() => setScanning(true)}>
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Start Scanning
-                    </Button>
-                  </div>
-                )}
-
-              </CardContent>
-            </Card>
+            <QrScannerCard
+              scanning={scanning}
+              setScanning={setScanning}
+              scanResult={scanResult}
+            />
 
             <Card>
               <CardHeader>
