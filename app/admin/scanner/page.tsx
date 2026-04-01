@@ -12,7 +12,7 @@ import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRi
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
-import {Html5QrcodeScanner} from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import EventManager from '@/components/event/Events';
 export default function ScannerPage() {
   const router = useRouter();
@@ -25,20 +25,36 @@ export default function ScannerPage() {
   const [scannerSupported, setScannerSupported] = useState(true);
 
 
-    const handleScan = async (decodedText: string) => {
+  const handleScan = async (decodedText: string) => {
     if (!decodedText) return;
-    setScanning(false);
+    
+    // Diagnostic logging
+    console.log("Scanner Detected Text:", decodedText);
 
     try {
-      const url = decodedText.trim();
-      const urlObj = new URL(url);
-      const segments = urlObj.pathname.split("/");
-      const userId = segments.pop();
+      let userId = "";
+      const text = decodedText.trim();
 
-      if (!userId) {
-        setScanResult({ success: false, message: "Invalid QR code" });
-        return;
+      // Flexible extraction: handles URLs or raw strings
+      if (text.includes("/scan/")) {
+        userId = text.split("/scan/").pop()?.split(/[?#]/)[0] || "";
+      } else if (text.startsWith("http")) {
+        try {
+          const urlObj = new URL(text);
+          userId = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+        } catch (e) {
+          userId = text.split("/").pop() || "";
+        }
+      } else {
+        userId = text; // Assume it's a raw ID
       }
+
+      if (!userId || userId.length < 5) {
+        console.warn("Extracted ID looks invalid:", userId);
+        return; // Don't stop scanning yet
+      }
+
+      setScanning(false); // Success! Stop camera
 
       const attendanceResult = await markAttendance(userId);
       setScanResult({
@@ -56,7 +72,8 @@ export default function ScannerPage() {
         throw new Error(attendanceResult.error || "Failed to mark attendance");
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      console.error("Scan processing error:", error);
+      toast({ variant: "destructive", title: "Scan Error", description: error.message });
     }
   };
   useEffect(() => {
@@ -80,23 +97,58 @@ export default function ScannerPage() {
     }
     fetchUsers();
   }, [toast]);
+
   useEffect(() => {
+    let html5QrCode: Html5Qrcode | null = null;
+    let isMounted = true;
+
     if (scanning) {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        false // Set verbose mode (true for debugging, false for normal use)
-      );
-      
-      scanner.render(handleScan, (errorMessage:any) => {
-        console.warn(errorMessage);
-      });
+      const startScanner = async () => {
+        try {
+          // Add a small delay to ensure DOM element is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          if (!isMounted) return;
+
+          html5QrCode = new Html5Qrcode("qr-reader");
+          const config = { 
+            fps: 20, 
+            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+              const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+              const qrboxSize = Math.floor(minEdgeSize * 0.7);
+              return {
+                  width: qrboxSize,
+                  height: qrboxSize
+              };
+            },
+            aspectRatio: 1.0 
+          };
+
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            handleScan,
+            () => {}
+          );
+        } catch (err) {
+          console.error("Unable to start scanning", err);
+          if (isMounted) {
+            toast({
+              variant: "destructive",
+              title: "Scanner Error",
+              description: "Could not access camera. Please ensure permissions are granted.",
+            });
+            setScanning(false);
+          }
+        }
+      };
+
+      startScanner();
 
       return () => {
-        scanner.clear();
+        isMounted = false;
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().catch(err => console.warn("Error stopping scanner:", err));
+        }
       };
     }
   }, [scanning]);
@@ -120,8 +172,8 @@ export default function ScannerPage() {
   const getTodayAttendanceCount = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    return users.filter(user => 
+
+    return users.filter(user =>
       user.attendance && user.attendance.some((a: any) => {
         const attendanceDate = new Date(a.date);
         attendanceDate.setHours(0, 0, 0, 0);
@@ -132,10 +184,21 @@ export default function ScannerPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <style dangerouslySetInnerHTML={{ __html: `
+        #qr-reader video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          border-radius: 8px !important;
+        }
+        #qr-reader {
+          border: none !important;
+        }
+      `}} />
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-          <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
+            <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
             <h1 className="text-xl font-bold">Placement Cell</h1>
           </div>
           <div className="flex items-center space-x-2">
@@ -157,11 +220,11 @@ export default function ScannerPage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6">Admin Dashboard</h2>
           <Link href="/admin/scanner/review">
-              <Button variant="ghost" size="sm">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Get all registered students
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm">
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Get all registered students
+            </Button>
+          </Link>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -171,7 +234,7 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{users.length}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Today's Attendance</CardTitle>
@@ -180,21 +243,21 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{getTodayAttendanceCount()}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Attendance Rate</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">
-                  {users.length > 0 
-                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%` 
+                  {users.length > 0
+                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%`
                     : '0%'}
                 </p>
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
@@ -204,7 +267,7 @@ export default function ScannerPage() {
               <CardContent>
                 {scanning ? (
                   <div>
-                    <div id="qr-reader" className="w-full h-64" />
+                    <div id="qr-reader" className="w-full aspect-square relative overflow-hidden rounded-lg border-2 border-primary bg-black shadow-lg mx-auto max-w-sm" />
                     <Button variant="outline" className="w-full mt-4" onClick={() => setScanning(false)}>
                       Cancel
                     </Button>
@@ -224,10 +287,10 @@ export default function ScannerPage() {
                     </Button>
                   </div>
                 )}
-                
+
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Today's Attendance</CardTitle>
@@ -253,7 +316,7 @@ export default function ScannerPage() {
                           .filter(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             return user.attendance && user.attendance.some((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
@@ -263,13 +326,13 @@ export default function ScannerPage() {
                           .map(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             const todayAttendance = user.attendance.find((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
                               return attendanceDate.getTime() === today.getTime();
                             });
-                            
+
                             return (
                               <TableRow key={user.id}>
                                 <TableCell>{user.name}</TableCell>
@@ -283,19 +346,19 @@ export default function ScannerPage() {
                         {users.filter(user => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          
+
                           return user.attendance && user.attendance.some((a: any) => {
                             const attendanceDate = new Date(a.date);
                             attendanceDate.setHours(0, 0, 0, 0);
                             return attendanceDate.getTime() === today.getTime();
                           });
                         }).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                              No attendance records for today
-                            </TableCell>
-                          </TableRow>
-                        )}
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                No attendance records for today
+                              </TableCell>
+                            </TableRow>
+                          )}
                       </TableBody>
                     </Table>
                   </div>
@@ -305,12 +368,12 @@ export default function ScannerPage() {
           </div>
 
           <EventManager />
-          
+
           <Tabs value="all">
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Students</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all">
               <Card>
                 <CardHeader>

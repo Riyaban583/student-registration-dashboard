@@ -18,10 +18,16 @@ import { reminderEmailTemplate } from "@/mail/Remind";
 
 export async function createEvent(eventName: string, eventDate: string) {
   try {
+    await connectToDatabase();
     const newEvent = new Event({ eventName, eventDate });
     await newEvent.save();
     console.log("Event created:", newEvent);
-    return newEvent;
+    return JSON.parse(JSON.stringify({
+      _id: newEvent._id.toString(),
+      eventName: newEvent.eventName,
+      eventDate: newEvent.eventDate,
+      attendance: newEvent.attendance || [],
+    }));
     
   } catch (error) {
     console.error("Error creating event:", error);
@@ -32,9 +38,10 @@ export async function createEvent(eventName: string, eventDate: string) {
 
 export async function getEvents() {
   try {
-    const events = await Event.find({}).sort({ createdAt: -1 });
+    await connectToDatabase();
+    const events = await Event.find({}).sort({ createdAt: -1 }).lean();
     console.log('Event Data',events)
-    return events;
+    return JSON.parse(JSON.stringify(events));
   } catch (error) {
     console.error("Error fetching events:", error);
   }
@@ -43,13 +50,18 @@ export async function getEvents() {
 
 export async function deleteEvent(id: string) {
   try {
+    await connectToDatabase();
     const deletedEvent = await Event.findByIdAndDelete(id);
     if (!deletedEvent) {
       console.error("Event not found:", id);
       return null;
     }
     console.log("Event deleted:", deletedEvent);
-    return deletedEvent;
+    return JSON.parse(JSON.stringify({
+      _id: deletedEvent._id.toString(),
+      eventName: deletedEvent.eventName,
+      eventDate: deletedEvent.eventDate,
+    }));
   } catch (error) {
     console.error("Error deleting event:", error);
   }
@@ -70,7 +82,7 @@ export async function markStudentAttendence(userId: string) {
  
 
     let user = await Students.findOne({
-      qrCode: `${process.env.NEXT_PUBLIC_APP_URL || 'https://student-dashboard-sable.vercel.app'}/scan/${userId}`
+      qrCode: { $regex: new RegExp(`/scan/${userId}$`, 'i') }
     });
 
 
@@ -146,7 +158,7 @@ export async function RemainerStudents(id: string) {
       return { success: false, message: 'Event not found' };
     }
 
-    const students = await Students.find({ eventName: event.eventName });
+    const students = await Students.find({ eventName: event.eventName }).lean();
     if (!students || students.length === 0) {
       return { success: false, message: 'No students found for this event' };
     }
