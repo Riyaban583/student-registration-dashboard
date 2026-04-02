@@ -120,14 +120,14 @@ const [open, setOpen] = useState(false);
   const filteredStudents = students.filter((s) => {
     return (
       (branchFilter ? s.branch === branchFilter : true) &&
-      (domainFilter ? s.domain.includes(domainFilter) : true)
+      (domainFilter ? s.domain?.includes(domainFilter) : true)
     );
   });
 
   // collect unique values for dropdowns
   const uniqueBranches = Array.from(new Set(students.map((s) => s.branch)));
   const uniqueDomains = Array.from(
-    new Set(students.flatMap((s) => s.domain))
+    new Set(students.flatMap((s) => s.domain || []))
   );
 
   return (
@@ -217,7 +217,7 @@ const [open, setOpen] = useState(false);
                   }}>{student.email}</td>
                   <td className="px-2 py-1 border">{student.branch}</td>
                   <td className="px-2 py-1 border">
-                    {student.domain.join(", ")}
+                    {student.domain?.join(", ") || ""}
                   </td>
 
                   <td className="px-2 py-1 border">
@@ -349,7 +349,7 @@ const [open, setOpen] = useState(false);
           <div>
             <h5 className="text-md font-semibold text-gray-300 mb-2">Domains</h5>
             <div className="flex flex-wrap gap-2">
-              {selectedStudent.domain.map(d => (
+              {selectedStudent.domain?.map(d => (
                 <span key={d} className="px-4 py-1 text-sm font-medium bg-purple-900 text-purple-300 rounded-full">{d}</span>
               ))}
             </div>

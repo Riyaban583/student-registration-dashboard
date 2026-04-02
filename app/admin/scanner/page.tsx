@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,31 +12,38 @@ import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRi
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
-import {Html5QrcodeScanner} from 'html5-qrcode';
 import EventManager from '@/components/event/Events';
+import { useQrScanner } from '@/hooks/useQrScanner';
+import { QrScannerCard } from '@/components/scanner/QrScannerCard';
+
 export default function ScannerPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<null | { success: boolean; message: string; user?: any }>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scannerSupported, setScannerSupported] = useState(true);
 
-
-    const handleScan = async (decodedText: string) => {
-    if (!decodedText) return;
-    setScanning(false);
-
+  const handleScanProcess = useCallback(async (decodedText: string) => {
     try {
-      const url = decodedText.trim();
-      const urlObj = new URL(url);
-      const segments = urlObj.pathname.split("/");
-      const userId = segments.pop();
+      let userId = "";
+      const text = decodedText.trim();
 
-      if (!userId) {
-        setScanResult({ success: false, message: "Invalid QR code" });
+      // Flexible extraction: handles URLs or raw strings
+      if (text.includes("/scan/")) {
+        userId = text.split("/scan/").pop()?.split(/[?#]/)[0] || "";
+      } else if (text.startsWith("http")) {
+        try {
+          const urlObj = new URL(text);
+          userId = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+        } catch (e) {
+          userId = text.split("/").pop() || "";
+        }
+      } else {
+        userId = text; // Assume it's a raw ID
+      }
+
+      if (!userId || userId.length < 5) {
+        console.warn("Extracted ID looks invalid:", userId);
         return;
       }
 
@@ -53,12 +60,18 @@ export default function ScannerPage() {
         const usersResult = await getAllUsers();
         if (usersResult.success) setUsers(usersResult.users || []);
       } else {
-        throw new Error(attendanceResult.error || "Failed to mark attendance");
+        toast({ variant: "destructive", title: "Scan Error", description: attendanceResult.error });
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      console.error("Scan processing error:", error);
+      toast({ variant: "destructive", title: "Scan Error", description: error.message });
     }
-  };
+  }, [toast]);
+
+  const { scanning, setScanning, scanResult, setScanResult } = useQrScanner({
+    onScan: handleScanProcess
+  });
+
   useEffect(() => {
     async function fetchUsers() {
       try {
@@ -80,36 +93,6 @@ export default function ScannerPage() {
     }
     fetchUsers();
   }, [toast]);
-  useEffect(() => {
-    if (scanning) {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        false // Set verbose mode (true for debugging, false for normal use)
-      );
-      
-      scanner.render(handleScan, (errorMessage:any) => {
-        console.warn(errorMessage);
-      });
-
-      return () => {
-        scanner.clear();
-      };
-    }
-  }, [scanning]);
-
-  const handleError = (err: any) => {
-    console.error(err);
-    toast({
-      variant: "destructive",
-      title: "Scanner Error",
-      description: "Could not access camera or scanner encountered an error",
-    });
-    setScanning(false);
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -120,8 +103,8 @@ export default function ScannerPage() {
   const getTodayAttendanceCount = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    return users.filter(user => 
+
+    return users.filter(user =>
       user.attendance && user.attendance.some((a: any) => {
         const attendanceDate = new Date(a.date);
         attendanceDate.setHours(0, 0, 0, 0);
@@ -135,7 +118,7 @@ export default function ScannerPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-          <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
+            <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
             <h1 className="text-xl font-bold">Placement Cell</h1>
           </div>
           <div className="flex items-center space-x-2">
@@ -157,11 +140,11 @@ export default function ScannerPage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6">Admin Dashboard</h2>
           <Link href="/admin/scanner/review">
-              <Button variant="ghost" size="sm">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Get all registered students
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm">
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Get all registered students
+            </Button>
+          </Link>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -171,7 +154,7 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{users.length}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Today's Attendance</CardTitle>
@@ -180,54 +163,28 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{getTodayAttendanceCount()}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Attendance Rate</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">
-                  {users.length > 0 
-                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%` 
+                  {users.length > 0
+                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%`
                     : '0%'}
                 </p>
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>QR Scanner</CardTitle>
-                <CardDescription>Scan student QR codes to mark attendance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {scanning ? (
-                  <div>
-                    <div id="qr-reader" className="w-full h-64" />
-                    <Button variant="outline" className="w-full mt-4" onClick={() => setScanning(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    {scanResult && (
-                      <Alert variant={scanResult.success ? "default" : "destructive"} className="mb-4">
-                        {scanResult.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
-                        <AlertTitle>{scanResult.success ? "Success" : "Error"}</AlertTitle>
-                        <AlertDescription>{scanResult.message}</AlertDescription>
-                      </Alert>
-                    )}
-                    <Button className="w-full" onClick={() => setScanning(true)}>
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Start Scanning
-                    </Button>
-                  </div>
-                )}
-                
-              </CardContent>
-            </Card>
-            
+            <QrScannerCard
+              scanning={scanning}
+              setScanning={setScanning}
+              scanResult={scanResult}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Today's Attendance</CardTitle>
@@ -253,7 +210,7 @@ export default function ScannerPage() {
                           .filter(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             return user.attendance && user.attendance.some((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
@@ -263,13 +220,13 @@ export default function ScannerPage() {
                           .map(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             const todayAttendance = user.attendance.find((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
                               return attendanceDate.getTime() === today.getTime();
                             });
-                            
+
                             return (
                               <TableRow key={user.id}>
                                 <TableCell>{user.name}</TableCell>
@@ -283,19 +240,19 @@ export default function ScannerPage() {
                         {users.filter(user => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          
+
                           return user.attendance && user.attendance.some((a: any) => {
                             const attendanceDate = new Date(a.date);
                             attendanceDate.setHours(0, 0, 0, 0);
                             return attendanceDate.getTime() === today.getTime();
                           });
                         }).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                              No attendance records for today
-                            </TableCell>
-                          </TableRow>
-                        )}
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                No attendance records for today
+                              </TableCell>
+                            </TableRow>
+                          )}
                       </TableBody>
                     </Table>
                   </div>
@@ -305,12 +262,12 @@ export default function ScannerPage() {
           </div>
 
           <EventManager />
-          
+
           <Tabs value="all">
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Students</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all">
               <Card>
                 <CardHeader>
