@@ -76,7 +76,7 @@ export async function getUserById(userId: string) {
         email: user.email,
         rollNumber: user.rollNumber,
         qrCode: user.qrCode,
-        attendance: user.attendance.map((a: any) => ({
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
@@ -91,7 +91,15 @@ export async function getUserById(userId: string) {
 export async function getUserByRollNumber(rollNumber: string) {
   try {
     await connectToDatabase();
-    const user = await User.findOne({ rollNumber }).lean() as any;
+    const normalizedRollNumber = rollNumber.trim();
+
+    if (!normalizedRollNumber) {
+      return { success: false, error: 'Roll number is required' };
+    }
+
+    const exactRollPattern = new RegExp(`^${escapeRegex(normalizedRollNumber)}$`, 'i');
+    const user = (await User.findOne({ rollNumber: exactRollPattern }).lean()
+      || await Students.findOne({ rollNumber: exactRollPattern }).lean()) as any;
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -105,7 +113,7 @@ export async function getUserByRollNumber(rollNumber: string) {
         email: user.email,
         rollNumber: user.rollNumber,
         qrCode: user.qrCode,
-        attendance: user.attendance.map((a: any) => ({
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
@@ -436,7 +444,7 @@ export async function getStudentByEmail(email: string) {
         year: user.year,
         rollNumber: user.rollNumber,
         qrCode: user.qrCode,
-        attendance: user.attendance.map((a: any) => ({
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
@@ -474,7 +482,7 @@ export async function getStudentById(userId: string) {
         eventName: user.eventName,
         phoneNumber: user.phoneNumber,
         qrCode: user.qrCode,
-        attendance: user.attendance.map((a: any) => ({
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),

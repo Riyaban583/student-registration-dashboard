@@ -82,7 +82,9 @@ export default function DashboardPage() {
   }, [userId, toast]);
 
   const handleSearch = async () => {
-    if (!rollNumber.trim()) {
+    const normalizedRollNumber = rollNumber.trim();
+
+    if (!normalizedRollNumber) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -92,7 +94,7 @@ export default function DashboardPage() {
     }
 
     setSearchLoading(true);
-    const result = await getUserByRollNumber(rollNumber);
+  const result = await getUserByRollNumber(normalizedRollNumber);
 
     if (result.success && result.user) {
       setUser(result.user);
