@@ -145,6 +145,12 @@ export default function ScannerPage() {
               Get all registered students
             </Button>
           </Link>
+          <Link href="/admin/alumni">
+            <Button variant="ghost" size="sm">
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Manage Alumni
+            </Button>
+          </Link>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
