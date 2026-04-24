@@ -127,6 +127,9 @@ export default function Home() {
             <Link href="/student-register">
               <Button size="lg" className="w-full sm:w-auto">Student Registration</Button>
             </Link>
+            <Link href="/alumni">
+              <Button size="lg" className="w-full sm:w-auto">Alumni Portal</Button>
+            </Link>
             <Link href="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">Admin Access</Button>
             </Link>

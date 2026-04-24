@@ -300,7 +300,10 @@ export async function getAllUsers() {
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
-        attendance: user.attendance,
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
+          date: a.date instanceof Date ? a.date.toISOString() : a.date,
+          present: a.present,
+        })),
       }))
     };
   } catch (error) {
@@ -513,7 +516,10 @@ export const getAllRecruitments = async () => {
         eventName: user.eventName,
         phoneNumber: user.phoneNumber,
         qrCode: user.qrCode,
-        attendance: user.attendance,
+        attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
+          date: a.date instanceof Date ? a.date.toISOString() : a.date,
+          present: a.present,
+        })),
         cgpa: user.cgpa || "",
         back: user.back || "",
         summary: user.summary || "",
