@@ -11,7 +11,7 @@ import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
 import { toZonedTime, format } from "date-fns-tz";
 
-export async function registerUser(userData: { name: string; email: string; rollNumber: string }) {
+export async function registerUser(userData: { name: string; email: string; rollNumber: string; branch: string }) {
   try {
     await connectToDatabase();
 
@@ -44,6 +44,7 @@ export async function registerUser(userData: { name: string; email: string; roll
     await newUser.save();
 
     revalidatePath('/dashboard');
+    revalidatePath('/admin/scanner');
 
     return {
       success: true,
@@ -75,6 +76,7 @@ export async function getUserById(userId: string) {
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
+        branch: user.branch || '',
         qrCode: user.qrCode,
         attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
@@ -112,6 +114,7 @@ export async function getUserByRollNumber(rollNumber: string) {
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
+        branch: user.branch || '',
         qrCode: user.qrCode,
         attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
@@ -300,6 +303,7 @@ export async function getAllUsers() {
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
+        branch: user.branch || '',
         attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
@@ -577,6 +581,82 @@ export const review = async (data: ReviewData) => {
   } catch (error) {
     console.error("Error reviewing student:", error);
     return { success: false, error: "Failed to review student" };
+  }
+}
+
+export async function updateUserInfo(
+  userId: string,
+  updateData: {
+    branch?: string;
+    name?: string;
+    email?: string;
+    rollNumber?: string;
+  }
+) {
+  try {
+    await connectToDatabase();
+
+    const updateFields: any = {};
+    if (updateData.branch !== undefined) updateFields.branch = updateData.branch;
+    if (updateData.name) updateFields.name = updateData.name;
+    if (updateData.email) updateFields.email = updateData.email;
+    if (updateData.rollNumber) updateFields.rollNumber = updateData.rollNumber;
+
+    let user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, strict: false }
+    );
+    if (user) {
+      revalidatePath('/dashboard');
+      revalidatePath('/admin/scanner');
+      return {
+        success: true,
+        user: {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          rollNumber: user.rollNumber,
+          branch: user.branch || '',
+          qrCode: user.qrCode,
+          attendance: (Array.isArray(user.attendance) ? user.attendance : []).map((a: any) => ({
+            date: a.date instanceof Date ? a.date.toISOString() : a.date,
+            present: a.present,
+          })),
+        }
+      };
+    }
+
+    let student = await Students.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, strict: false }
+    );
+    if (student) {
+      revalidatePath('/dashboard');
+      revalidatePath('/student-dashboard');
+      revalidatePath('/admin/scanner');
+      return {
+        success: true,
+        user: {
+          id: student._id.toString(),
+          name: student.name,
+          email: student.email,
+          rollNumber: student.rollNumber,
+          branch: student.branch || '',
+          qrCode: student.qrCode,
+          attendance: (Array.isArray(student.attendance) ? student.attendance : []).map((a: any) => ({
+            date: a.date instanceof Date ? a.date.toISOString() : a.date,
+            present: a.present,
+          })),
+        }
+      };
+    }
+
+    return { success: false, error: 'User not found' };
+  } catch (error) {
+    console.error('Error updating user info:', error);
+    return { success: false, error: 'Failed to update user info' };
   }
 }
 

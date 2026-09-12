@@ -8,7 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRight } from 'lucide-react';
+import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRight, BarChart3, RefreshCw } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
@@ -22,6 +29,28 @@ export default function ScannerPage() {
   
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const result = await getAllUsers();
+      if (result.success) {
+        setUsers(result.users || []);
+      } else {
+        throw new Error(result.error || "Failed to fetch users");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [toast]);
 
   const handleScanProcess = useCallback(async (decodedText: string) => {
     try {
@@ -56,9 +85,7 @@ export default function ScannerPage() {
 
       if (attendanceResult.success) {
         toast({ title: "Success", description: attendanceResult.message });
-
-        const usersResult = await getAllUsers();
-        if (usersResult.success) setUsers(usersResult.users || []);
+        await fetchUsers();
       } else {
         toast({ variant: "destructive", title: "Scan Error", description: attendanceResult.error });
       }
@@ -66,33 +93,20 @@ export default function ScannerPage() {
       console.error("Scan processing error:", error);
       toast({ variant: "destructive", title: "Scan Error", description: error.message });
     }
-  }, [toast]);
+  }, [toast, fetchUsers]);
 
   const { scanning, setScanning, scanResult, setScanResult } = useQrScanner({
     onScan: handleScanProcess
   });
 
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const result = await getAllUsers();
-        if (result.success) {
-          setUsers(result.users || []);
-        } else {
-          throw new Error(result.error || "Failed to fetch users");
-        }
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchUsers();
-  }, [toast]);
+  }, [fetchUsers]);
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchUsers();
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -276,11 +290,35 @@ export default function ScannerPage() {
 
             <TabsContent value="all">
               <Card>
-                <CardHeader>
-                  <CardTitle>Student Records</CardTitle>
-                  <CardDescription>
-                    Complete list of registered students
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>Student Records</CardTitle>
+                    <CardDescription>
+                      Complete list of registered students
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleManualRefresh}
+                      disabled={refreshing || loading}
+                      className="h-9 px-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      title="Refresh Student Records"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                      {refreshing ? "Refreshing..." : "Refresh"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStatsOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Branch-Wise Statistics
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -294,6 +332,7 @@ export default function ScannerPage() {
                           <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Roll Number</TableHead>
+                            <TableHead>Branch</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Total Attendance</TableHead>
                           </TableRow>
@@ -301,15 +340,26 @@ export default function ScannerPage() {
                         <TableBody>
                           {users.map(user => (
                             <TableRow key={user.id}>
-                              <TableCell>{user.name}</TableCell>
+                              <TableCell className="font-medium">{user.name}</TableCell>
                               <TableCell>{user.rollNumber}</TableCell>
+                              <TableCell>
+                                {user.branch ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                    {user.branch}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs italic">
+                                    Not Specified
+                                  </span>
+                                )}
+                              </TableCell>
                               <TableCell>{user.email}</TableCell>
                               <TableCell>{user.attendance ? user.attendance.length : 0}</TableCell>
                             </TableRow>
                           ))}
                           {users.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                                 No students registered yet
                               </TableCell>
                             </TableRow>
@@ -322,6 +372,80 @@ export default function ScannerPage() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Branch-Wise Statistics Popup Dialog */}
+          <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Branch-Wise Student Statistics
+                </DialogTitle>
+                <DialogDescription>
+                  Count of registered students categorized by branch
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-3">
+                {(() => {
+                  const branchStats = users.reduce((acc: Record<string, number>, user: any) => {
+                    const branch = user.branch && user.branch.trim() ? user.branch.trim() : 'Not Specified';
+                    acc[branch] = (acc[branch] || 0) + 1;
+                    return acc;
+                  }, {});
+
+                  const sortedBranchStats = Object.entries(branchStats).sort(
+                    ([aBranch, aCount], [bBranch, bCount]) => (bCount as number) - (aCount as number)
+                  );
+
+                  if (sortedBranchStats.length === 0) {
+                    return (
+                      <p className="text-center py-6 text-muted-foreground text-sm">
+                        No registered students found.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <div className="divide-y rounded-lg border">
+                        {sortedBranchStats.map(([branch, count]) => (
+                          <div
+                            key={branch}
+                            className="flex items-center justify-between p-3.5 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground text-base">
+                                {branch}
+                              </span>
+                              {branch === 'Not Specified' && (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                  (Pending update)
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-muted-foreground font-bold">→</span>
+                              <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary border border-primary/20">
+                                {count}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 flex justify-between items-center text-xs text-muted-foreground px-1">
+                        <span>Total Branches: {sortedBranchStats.length}</span>
+                        <span className="font-semibold text-foreground">
+                          Total Students: {users.length}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
 

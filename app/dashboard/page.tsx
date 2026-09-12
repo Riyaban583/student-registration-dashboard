@@ -23,9 +23,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { GraduationCap, ArrowLeft, Calendar, Download } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { GraduationCap, ArrowLeft, Calendar, Download, Edit, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
-import { getUserById, getUserByRollNumber } from "@/app/actions/user";
+import { getUserById, getUserByRollNumber, updateUserInfo } from "@/app/actions/user";
 import { useToast } from "@/hooks/use-toast";
 
 interface User {
@@ -33,6 +41,7 @@ interface User {
   name: string;
   email: string;
   rollNumber: string;
+  branch?: string;
   qrCode: string;
   attendance: {
     date: string;
@@ -49,6 +58,70 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [rollNumber, setRollNumber] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Edit Student Info state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editBranch, setEditBranch] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editRollNumber, setEditRollNumber] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleOpenEdit = () => {
+    if (user) {
+      setEditBranch(user.branch || "");
+      setEditName(user.name || "");
+      setEditRollNumber(user.rollNumber || "");
+      setEditEmail(user.email || "");
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    if (!editBranch) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select your branch.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const res = await updateUserInfo(user.id, {
+        branch: editBranch,
+        name: editName,
+        email: editEmail,
+        rollNumber: editRollNumber,
+      });
+
+      if (res.success && res.user) {
+        setUser((prev) => prev ? { ...prev, ...res.user } : null);
+        toast({
+          title: "Profile Updated",
+          description: "Student info and branch have been updated successfully.",
+        });
+        setIsEditModalOpen(false);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Update Failed",
+          description: res.error || "Failed to update student info.",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "An error occurred while updating.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchUser() {
@@ -202,34 +275,90 @@ export default function DashboardPage() {
           </div>
         ) : user ? (
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6">Student Dashboard</h2>
+            {!user.branch && (
+              <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-amber-900 dark:text-amber-200">Branch details missing</p>
+                    <p className="text-sm text-amber-800/80 dark:text-amber-300/80">
+                      Please update your branch ASAP on this dashboard to ensure placement records are up to date.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleOpenEdit}
+                  className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+                >
+                  Add Branch Now
+                </Button>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Core Team Member Dashboard</h2>
+              <Button variant="outline" size="sm" onClick={handleOpenEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Student Info
+              </Button>
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <Card>
-                <CardHeader>
-                  <CardTitle>Student Info</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-base">Student Info</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={handleOpenEdit} className="h-8 px-2 text-xs">
+                    <Edit className="h-3.5 w-3.5 mr-1" />
+                    Edit
+                  </Button>
                 </CardHeader>
                 <CardContent>
-                  <dl className="space-y-2">
+                  <dl className="space-y-3 text-sm">
                     <div>
-                      <dt className="text-sm font-medium text-muted-foreground">
+                      <dt className="text-xs font-medium text-muted-foreground">
                         Name
                       </dt>
-                      {user && <div>{user.name}</div>}
+                      <dd className="font-semibold text-foreground">{user.name}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-muted-foreground">
+                      <dt className="text-xs font-medium text-muted-foreground">
                         Roll Number
                       </dt>
-                      <dd>{user.rollNumber}</dd>
+                      <dd className="font-medium text-foreground">{user.rollNumber}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-muted-foreground">
+                      <dt className="text-xs font-medium text-muted-foreground">
+                        Branch
+                      </dt>
+                      <dd className="pt-0.5">
+                        {user.branch ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                            {user.branch}
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold inline-flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5" /> Not Added Yet
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-medium text-muted-foreground">
                         Email
                       </dt>
-                      <dd className="truncate">{user.email}</dd>
+                      <dd className="truncate text-muted-foreground">{user.email}</dd>
                     </div>
                   </dl>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenEdit}
+                    className="w-full mt-4 text-xs"
+                  >
+                    <Edit className="h-3.5 w-3.5 mr-1" />
+                    Edit Student Info
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -307,6 +436,85 @@ export default function DashboardPage() {
                 </Card>
               </TabsContent>
             </Tabs>
+
+            {/* Edit Student Info Dialog */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Student Info</DialogTitle>
+                  <DialogDescription>
+                    Update your details and add or change your branch.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSaveEdit} className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Branch <span className="text-destructive">*</span></label>
+                    <select
+                      value={editBranch}
+                      onChange={(e) => setEditBranch(e.target.value)}
+                      required
+                      className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Select Branch</option>
+                      <option value="CSE">CSE</option>
+                      <option value="ECE">ECE</option>
+                      <option value="ME">ME</option>
+                      <option value="CE">CE</option>
+                      <option value="EE">EE</option>
+                      <option value="IT">IT</option>
+                      <option value="PCE">PCE</option>
+                      <option value="PE">PE</option>
+                      <option value="AE">AE</option>
+                      <option value="EIC">EIC</option>
+                      <option value="CHE">CHE</option>
+                      <option value="P&I">P&I</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Roll Number</label>
+                    <Input
+                      value={editRollNumber}
+                      onChange={(e) => setEditRollNumber(e.target.value)}
+                      placeholder="Roll Number"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">Email</label>
+                    <Input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="Email"
+                      required
+                    />
+                  </div>
+                  <DialogFooter className="pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditModalOpen(false)}
+                      disabled={isUpdating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isUpdating}>
+                      {isUpdating ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         ) : null}
       </main>
