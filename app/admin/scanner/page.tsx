@@ -152,19 +152,26 @@ export default function ScannerPage() {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Admin Dashboard</h2>
-          <Link href="/admin/scanner/review">
-            <Button variant="ghost" size="sm">
-              <ArrowRight className="h-4 w-4 mr-2" />
-              Get all registered students
-            </Button>
-          </Link>
-          <Link href="/admin/alumni">
-            <Button variant="ghost" size="sm">
-              <ArrowRight className="h-4 w-4 mr-2" />
-              Manage Alumni
-            </Button>
-          </Link>
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Link href="/admin/scanner/review">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Get all registered students
+              </Button>
+            </Link>
+            <Link href="/admin/alumni">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Manage Alumni
+              </Button>
+            </Link>
+            <Link href="/admin/questions">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Manage Drive Questions
+              </Button>
+            </Link>
+          </div>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
