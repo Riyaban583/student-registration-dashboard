@@ -6,15 +6,52 @@ import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
-function checkAdminAuth() {
+export async function checkQuestionsAccess(): Promise<boolean> {
+  // 1. Check admin token
   const token = cookies().get('auth-token')?.value;
-  if (!token) return false;
-  try {
-    const decoded: any = jwt.decode(token);
-    return decoded && decoded.role === 'admin';
-  } catch {
-    return false;
+  if (token) {
+    try {
+      const decoded: any = jwt.decode(token);
+      if (decoded && typeof decoded === 'object' && decoded.role === 'admin') {
+        return true;
+      }
+    } catch {}
   }
+
+  // 2. Check alumni access token
+  const alumniToken = cookies().get('alumni-access-token')?.value;
+  if (alumniToken === 'authenticated') {
+    return true;
+  }
+
+  return false;
+}
+
+export async function verifyAndAuthenticateQuestionsAccess(password: string) {
+  const ALUMNI_PASSWORD = process.env.ALUMNI_SECTION_PASSWORD || 'alumni123';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+  const cleanPass = (password || '').trim();
+  if (cleanPass === ALUMNI_PASSWORD.trim() || cleanPass === ADMIN_PASSWORD.trim()) {
+    cookies().set({
+      name: 'alumni-access-token',
+      value: 'authenticated',
+      httpOnly: true,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    });
+    return { success: true };
+  }
+
+  return {
+    success: false,
+    error: 'Incorrect Password. Enter Admin Password or Alumni Section Password.',
+  };
+}
+
+export async function logoutQuestionsAccess() {
+  cookies().delete('alumni-access-token');
+  return { success: true };
 }
 
 export interface DriveQuestionInput {
@@ -121,8 +158,9 @@ export async function getDriveQuestionFilterOptions() {
 
 export async function addDriveQuestion(data: DriveQuestionInput) {
   try {
-    if (!checkAdminAuth()) {
-      return { success: false, error: 'Unauthorized: Admin access required' };
+    const hasAccess = await checkQuestionsAccess();
+    if (!hasAccess) {
+      return { success: false, error: 'Unauthorized: Admin or Alumni password access required' };
     }
 
     await connectToDatabase();
@@ -160,8 +198,9 @@ export async function addDriveQuestion(data: DriveQuestionInput) {
 
 export async function updateDriveQuestion(id: string, data: Partial<DriveQuestionInput>) {
   try {
-    if (!checkAdminAuth()) {
-      return { success: false, error: 'Unauthorized: Admin access required' };
+    const hasAccess = await checkQuestionsAccess();
+    if (!hasAccess) {
+      return { success: false, error: 'Unauthorized: Admin or Alumni password access required' };
     }
 
     await connectToDatabase();
@@ -188,8 +227,9 @@ export async function updateDriveQuestion(id: string, data: Partial<DriveQuestio
 
 export async function deleteDriveQuestion(id: string) {
   try {
-    if (!checkAdminAuth()) {
-      return { success: false, error: 'Unauthorized: Admin access required' };
+    const hasAccess = await checkQuestionsAccess();
+    if (!hasAccess) {
+      return { success: false, error: 'Unauthorized: Admin or Alumni password access required' };
     }
 
     await connectToDatabase();
