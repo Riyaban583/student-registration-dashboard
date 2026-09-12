@@ -176,18 +176,6 @@ export default function PlacementQuestionsPage() {
     selectedRound !== "All Rounds" ||
     searchQuery.trim().length > 0;
 
-  const getDifficultyColor = (diff?: string) => {
-    switch (diff) {
-      case "Easy":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
-      case "Hard":
-        return "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-800";
-      case "Medium":
-      default:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800";
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col text-foreground">
       {/* Header */}
@@ -439,17 +427,6 @@ export default function PlacementQuestionsPage() {
                           <Layers className="h-3 w-3 text-muted-foreground" />
                           {q.round}
                         </Badge>
-
-                        {/* Difficulty */}
-                        {q.difficulty && (
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${getDifficultyColor(
-                              q.difficulty
-                            )}`}
-                          >
-                            {q.difficulty}
-                          </span>
-                        )}
                       </div>
 
                       {/* Year & Index */}
@@ -476,20 +453,6 @@ export default function PlacementQuestionsPage() {
                     <div className="p-4 rounded-xl bg-muted/40 border border-muted text-sm font-medium text-foreground whitespace-pre-wrap leading-relaxed">
                       {q.question}
                     </div>
-
-                    {/* Tags */}
-                    {q.tags && q.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {q.tags.map((t, i) => (
-                          <span
-                            key={i}
-                            className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground border"
-                          >
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
 
                     {/* Answer / Solution Accordion */}
                     {q.answer && (

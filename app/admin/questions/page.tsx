@@ -35,7 +35,6 @@ import {
   LogOut,
   Sparkles,
   HelpCircle,
-  CheckCircle,
   Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -56,8 +55,6 @@ interface QuestionItem {
   question: string;
   answer?: string;
   year?: string;
-  difficulty?: "Easy" | "Medium" | "Hard";
-  tags?: string[];
   createdAt: string;
 }
 
@@ -95,17 +92,15 @@ export default function AdminQuestionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Form State for Add / Edit
+  // Form State for Add
   const [formData, setFormData] = useState({
     company: "",
     branch: "All Branches",
     role: "Software Development Engineer",
     round: "Technical Interview",
+    year: new Date().getFullYear().toString(),
     question: "",
     answer: "",
-    year: new Date().getFullYear().toString(),
-    difficulty: "Medium" as "Easy" | "Medium" | "Hard",
-    tags: "",
   });
 
   // Edit modal state
@@ -116,11 +111,9 @@ export default function AdminQuestionsPage() {
     branch: "All Branches",
     role: "",
     round: "Technical Interview",
+    year: "",
     question: "",
     answer: "",
-    year: "",
-    difficulty: "Medium" as "Easy" | "Medium" | "Hard",
-    tags: "",
   });
 
   const loadQuestions = async () => {
@@ -169,23 +162,14 @@ export default function AdminQuestionsPage() {
 
     setIsSubmitting(true);
     try {
-      const tagsArray = formData.tags
-        ? formData.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : [];
-
       const res = await addDriveQuestion({
         company: formData.company,
         branch: formData.branch,
         role: formData.role,
         round: formData.round,
+        year: formData.year,
         question: formData.question,
         answer: formData.answer,
-        year: formData.year,
-        difficulty: formData.difficulty,
-        tags: tagsArray,
       });
 
       if (res.success) {
@@ -198,11 +182,9 @@ export default function AdminQuestionsPage() {
           branch: "All Branches",
           role: "Software Development Engineer",
           round: "Technical Interview",
+          year: new Date().getFullYear().toString(),
           question: "",
           answer: "",
-          year: new Date().getFullYear().toString(),
-          difficulty: "Medium",
-          tags: "",
         });
         await loadQuestions();
       } else {
@@ -230,11 +212,9 @@ export default function AdminQuestionsPage() {
       branch: q.branch,
       role: q.role || "",
       round: q.round || "Technical Interview",
+      year: q.year || "",
       question: q.question,
       answer: q.answer || "",
-      year: q.year || "",
-      difficulty: q.difficulty || "Medium",
-      tags: (q.tags || []).join(", "),
     });
     setIsEditOpen(true);
   };
@@ -245,23 +225,14 @@ export default function AdminQuestionsPage() {
 
     setIsSubmitting(true);
     try {
-      const tagsArray = editFormData.tags
-        ? editFormData.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : [];
-
       const res = await updateDriveQuestion(editingQuestion.id, {
         company: editFormData.company,
         branch: editFormData.branch,
         role: editFormData.role,
         round: editFormData.round,
+        year: editFormData.year,
         question: editFormData.question,
         answer: editFormData.answer,
-        year: editFormData.year,
-        difficulty: editFormData.difficulty,
-        tags: tagsArray,
       });
 
       if (res.success) {
@@ -381,7 +352,7 @@ export default function AdminQuestionsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* Company Name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold">
@@ -439,45 +410,14 @@ export default function AdminQuestionsPage() {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Year */}
+                {/* Drive Year */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold">Drive Year</label>
                   <Input
                     placeholder="2026"
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  />
-                </div>
-
-                {/* Difficulty */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">Difficulty Level</label>
-                  <select
-                    value={formData.difficulty}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        difficulty: e.target.value as "Easy" | "Medium" | "Hard",
-                      })
-                    }
-                    className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold">Tags (comma-separated)</label>
-                  <Input
-                    placeholder="DSA, SQL, OOP, Puzzles"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   />
                 </div>
               </div>
@@ -553,7 +493,6 @@ export default function AdminQuestionsPage() {
                       <TableHead>Branch</TableHead>
                       <TableHead>Round</TableHead>
                       <TableHead>Question Preview</TableHead>
-                      <TableHead>Difficulty</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -574,11 +513,6 @@ export default function AdminQuestionsPage() {
                         <TableCell className="text-xs text-muted-foreground">{q.round}</TableCell>
                         <TableCell className="max-w-md">
                           <p className="line-clamp-2 text-xs text-foreground">{q.question}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {q.difficulty}
-                          </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button
@@ -666,21 +600,11 @@ export default function AdminQuestionsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold">Difficulty</label>
-                  <select
-                    value={editFormData.difficulty}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        difficulty: e.target.value as "Easy" | "Medium" | "Hard",
-                      })
-                    }
-                    className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-                  >
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
+                  <label className="text-xs font-semibold">Drive Year</label>
+                  <Input
+                    value={editFormData.year}
+                    onChange={(e) => setEditFormData({ ...editFormData, year: e.target.value })}
+                  />
                 </div>
               </div>
 
@@ -700,14 +624,6 @@ export default function AdminQuestionsPage() {
                   rows={3}
                   value={editFormData.answer}
                   onChange={(e) => setEditFormData({ ...editFormData, answer: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold">Tags (comma-separated)</label>
-                <Input
-                  value={editFormData.tags}
-                  onChange={(e) => setEditFormData({ ...editFormData, tags: e.target.value })}
                 />
               </div>
 
