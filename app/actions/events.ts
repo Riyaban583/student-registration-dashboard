@@ -6,77 +6,95 @@ import Students from '@/models/Students'
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { generateToken } from '@/lib/auth';
-import { any } from 'zod';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
 import { AttendanceTemplate } from "@/mail/StudentAttendanceMail";
 import { reminderEmailTemplate } from "@/mail/Remind";
+import { toZonedTime, format } from "date-fns-tz";
 
 
 
 
 export async function createEvent(eventName: string, eventDate: string) {
   try {
+    await connectToDatabase();
     const newEvent = new Event({ eventName, eventDate });
     await newEvent.save();
     console.log("Event created:", newEvent);
-    return newEvent;
+    return JSON.parse(JSON.stringify({
+      _id: newEvent._id.toString(),
+      eventName: newEvent.eventName,
+      eventDate: newEvent.eventDate,
+      attendance: newEvent.attendance || [],
+    }));
     
   } catch (error) {
     console.error("Error creating event:", error);
-
+    return { success: false, error: 'Failed to create event' };
   }
 }
 
 
 export async function getEvents() {
   try {
-    const events = await Event.find({}).sort({ createdAt: -1 });
+    await connectToDatabase();
+    const events = await Event.find({}).sort({ createdAt: -1 }).lean();
     console.log('Event Data',events)
-    return events;
+    return JSON.parse(JSON.stringify(events));
   } catch (error) {
     console.error("Error fetching events:", error);
+    return [];
   }
 }
 
 
 export async function deleteEvent(id: string) {
   try {
+    await connectToDatabase();
     const deletedEvent = await Event.findByIdAndDelete(id);
     if (!deletedEvent) {
       console.error("Event not found:", id);
       return null;
     }
     console.log("Event deleted:", deletedEvent);
-    return deletedEvent;
+    return JSON.parse(JSON.stringify({
+      _id: deletedEvent._id.toString(),
+      eventName: deletedEvent.eventName,
+      eventDate: deletedEvent.eventDate,
+    }));
   } catch (error) {
     console.error("Error deleting event:", error);
+    return { success: false, error: 'Failed to delete event' };
   }
 }
 
 
 
-import { toZonedTime, format } from "date-fns-tz";
-import { QrCode } from 'lucide-react';
-import { yearsToDays } from 'date-fns';
-import { eventNames } from "process";
-
 const indiaTimeZone = "Asia/Kolkata"; // IST
+
+function escapeRegex(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export async function markStudentAttendence(userId: string) {
   try {
     await connectToDatabase();
  
 
-    let user = await Students.findOne({
-      qrCode: `${process.env.NEXT_PUBLIC_APP_URL || 'https://student-dashboard-sable.vercel.app'}/scan/${userId}`
-    });
+    // Security Fix: Use exact match on scanId to avoid regex injection
+    let user = await Students.findOne({ scanId: userId });
 
+    // Fallback for old records without scanId (using escaped regex)
+    if (!user) {
+      const escapedId = escapeRegex(userId);
+      user = await Students.findOne({
+        qrCode: { $regex: new RegExp(`/scan/${escapedId}$`, 'i') }
+      });
+    }
 
-    if(!user){
+    if (!user) {
       return { success: false, error: 'User not found' };
-
     }
 
     // ✅ Convert today's date to IST (without time)
@@ -146,7 +164,7 @@ export async function RemainerStudents(id: string) {
       return { success: false, message: 'Event not found' };
     }
 
-    const students = await Students.find({ eventName: event.eventName });
+    const students = await Students.find({ eventName: event.eventName }).lean();
     if (!students || students.length === 0) {
       return { success: false, message: 'No students found for this event' };
     }

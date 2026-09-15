@@ -18,6 +18,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   rollNumber: z.string().min(3, { message: 'Roll number must be at least 3 characters' }),
+  branch: z.string().min(1, { message: 'Please select a branch' }),
 });
 
 export default function RegisterPage() {
@@ -31,6 +32,7 @@ export default function RegisterPage() {
       name: '',
       email: '',
       rollNumber: '',
+      branch: '',
     },
   });
 
@@ -84,7 +86,7 @@ export default function RegisterPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Register</CardTitle>
-            <CardDescription>Create your account to get your QR code</CardDescription>
+            <CardDescription>Create your core team account to get your QR code</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -123,6 +125,37 @@ export default function RegisterPage() {
                       <FormLabel>Roll Number</FormLabel>
                       <FormControl>
                         <Input placeholder="22/285" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="branch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Branch</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="">Select Branch</option>
+                          <option value="CSE">CSE</option>
+                          <option value="ECE">ECE</option>
+                          <option value="ME">ME</option>
+                          <option value="CE">CE</option>
+                          <option value="EE">EE</option>
+                          <option value="IT">IT</option>
+                          <option value="PCE">PCE</option>
+                          <option value="PE">PE</option>
+                          <option value="AE">AE</option>
+                          <option value="EIC">EIC</option>
+                          <option value="CHE">CHE</option>
+                          <option value="P&I">P&I</option>
+                          <option value="Other">Other</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

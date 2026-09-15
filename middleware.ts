@@ -17,33 +17,31 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export function middleware(request: NextRequest) {
-  // Get the pathname
   const path = request.nextUrl.pathname;
 
-  // Define protected routes
+  if (path.startsWith('/admin/questions')) {
+    return NextResponse.next();
+  }
+
   const isAdminRoute = path.startsWith('/admin');
-
-  // Get the token from cookies
+  const isAlumniRoute = path.startsWith('/alumni') && !path.startsWith('/alumni/login');
   const token = request.cookies.get('auth-token')?.value;
-  // console.log(token)
-
 
   if (isAdminRoute) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    try {
-      const decoded = decodeJwtPayload(token);
-      // console.log("dedocde token",Jwt.decode(token))
-      if (!decoded || (typeof decoded !== 'object' || decoded.role !== 'admin')) {
-        // console.log("There might be error",decoded)
-
-        return NextResponse.redirect(new URL('/login', request.url));
-      }
-    } catch (error) {
-      // console.log("There might be error",error)
+    const decoded = decodeJwtPayload(token);
+    if (!decoded || (typeof decoded !== 'object' || decoded.role !== 'admin')) {
       return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
+  if (isAlumniRoute) {
+    const alumniToken = request.cookies.get('alumni-access-token')?.value;
+    if (!alumniToken) {
+      return NextResponse.redirect(new URL('/alumni/login', request.url));
     }
   }
 
@@ -51,5 +49,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/alumni/:path*'],
 };

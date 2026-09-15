@@ -45,6 +45,16 @@ interface User {
     date: string;
     present: boolean;
   }[];
+
+  // ga
+  // cgpa: string;
+  // back: string;
+  // summary: string;
+  // clubs: string;
+  // aim: string;
+  // believe: string;
+  // expect: string;
+  // domain: string[];
 }
 
 export default function DashboardPage() {
@@ -88,8 +98,27 @@ export default function DashboardPage() {
     fetchUser();
   }, [userId, toast]);
 
-  const handleSearch = async () => {
-    if (!email.trim()) {
+useEffect(() => {
+  const emailParam = searchParams.get("email");
+
+  async function fetchFromParams() {
+    if (emailParam) {
+      console.log("Fetching user by email:", emailParam);
+      setLoading(true);
+      await handleSearch(emailParam); // Search by email param
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }
+
+  fetchFromParams();
+}, [searchParams]);
+
+
+  const handleSearch = async (paramEmail?:string) => {
+     const searchEmail = String(paramEmail || email || "").trim();  // use param if given, else state
+    if (!searchEmail) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -99,7 +128,8 @@ export default function DashboardPage() {
     }
 
     setSearchLoading(true);
-    const result = await getStudentByEmail(email);
+    console.log("Searching for user with email:", searchEmail);
+    const result = await getStudentByEmail(searchEmail);
 
     if (result.success && result.user) {
       setUser(result.user);
@@ -179,7 +209,7 @@ export default function DashboardPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <Button onClick={handleSearch} disabled={searchLoading}>
+                <Button onClick={() => handleSearch()} disabled={searchLoading}>
                   {searchLoading ? "Searching..." : "Search"}
                 </Button>
               </div>
@@ -229,7 +259,10 @@ export default function DashboardPage() {
                 <CardContent>
                   <dl className="space-y-3 text-sm">
                     <div>
-                      <dt className="font-medium text-muted-foreground">
+                       <a href="https://chat.whatsapp.com/JZToUVRAWuZKIeHH1LiWfk?mode=gi_t" className="hover:underline bg-gray-200 px-3 py-2 mb-2 rounded-lg text-black font-semibold" target="_blank" rel="noopener noreferrer">
+              Join Whatsapp Group
+            </a>
+                      <dt className="font-medium text-muted-foreground mt-3">
                         Name
                       </dt>
                       <dd className="text-lg font-semibold">{user.name}</dd>
@@ -286,6 +319,55 @@ export default function DashboardPage() {
                       </dd>
                     </div>
                   </dl>
+                  {/* new ga  */}
+
+          {/* <div>
+
+           
+      <dt className="font-medium text-muted-foreground mt-2">CGPA</dt>
+      <dd className="truncate">{user.cgpa}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Backlogs</dt>
+      <dd className="truncate">{user.back}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Why should we have you in PTP ?</dt>
+      <dd className="whitespace-pre-line break-words">{user.summary}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Clubs</dt>
+      <dd className="whitespace-pre-line break-words">{user.clubs}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Aim</dt>
+      <dd className="whitespace-pre-line break-words">{user.aim}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Do you believe joining the PTP will lead to placement opportunity?</dt>
+      <dd className="whitespace-pre-line break-words">{user.believe}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">What do you expect from PTP?</dt>
+      <dd className="whitespace-pre-line break-words">{user.expect}</dd>
+    </div>
+
+    <div>
+      <dt className="font-medium text-muted-foreground mt-2">Selected Domains</dt>
+      <dd className="whitespace-pre-line break-words">
+        {user.domain && user.domain.length > 0
+          ? user.domain.join(', ')
+          : 'N/A'}
+      </dd>
+    </div> */}
+          {/*  end  */}
+
                 </CardContent>
               </Card>
 
@@ -381,3 +463,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+function searchUser(emailParam: string) {
+  throw new Error("Function not implemented.");
+}
+

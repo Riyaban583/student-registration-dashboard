@@ -88,9 +88,10 @@
 // }
 
 
-
+"use client"
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+// import { useRouter } from 'next/router';
 import {
   Card,
   CardContent,
@@ -99,9 +100,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { GraduationCap, User, ShieldCheck } from 'lucide-react';
+import { GraduationCap, User, ShieldCheck, HelpCircle, BookOpen } from 'lucide-react';
 
 export default function Home() {
+
+  // const router = useRouter();
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b">
@@ -120,9 +123,18 @@ export default function Home() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Streamline attendance tracking for placement activities with our QR code system.
           </p>
-          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
+          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
             <Link href="/student-register">
               <Button size="lg" className="w-full sm:w-auto">Student Registration</Button>
+            </Link>
+            <Link href="/placement-questions">
+              <Button size="lg" variant="default" className="w-full sm:w-auto">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Drive Questions
+              </Button>
+            </Link>
+            <Link href="/alumni">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">Alumni Portal</Button>
             </Link>
             <Link href="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">Admin Access</Button>
@@ -130,11 +142,28 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-         
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {/* Past Drive Questions Card */}
+          <Card className="hover:shadow-md transition-shadow duration-300 border-primary/20 flex flex-col justify-between">
+            <CardHeader className="flex items-center space-x-2">
+              <BookOpen className="text-primary" />
+              <div>
+                <CardTitle>Drive Questions</CardTitle>
+                <CardDescription>Past placement drives questions</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p>Practice real questions asked in past campus drives. Filter by your branch and company to prepare strategically.</p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/placement-questions" className="w-full">
+                <Button className="w-full">Explore Questions</Button>
+              </Link>
+            </CardFooter>
+          </Card>
 
           {/* Student Dashboard */}
-          <Card className="hover:shadow-md transition-shadow duration-300">
+          <Card className="hover:shadow-md transition-shadow duration-300 flex flex-col justify-between">
             <CardHeader className="flex items-center space-x-2">
               <User className="text-primary" />
               <div>
@@ -153,7 +182,7 @@ export default function Home() {
           </Card>
 
            {/* Core Team Dashboard */}
-           <Card className="hover:shadow-md transition-shadow duration-300">
+           <Card className="hover:shadow-md transition-shadow duration-300 flex flex-col justify-between">
             <CardHeader className="flex items-center space-x-2">
               <ShieldCheck className="text-primary" />
               <div>
@@ -166,17 +195,25 @@ export default function Home() {
             </CardContent>
             <CardFooter>
               <Link href="/dashboard" className="w-full">
-                <Button className="w-full">Core Dashboard</Button>
+                <Button variant="outline" className="w-full">Core Dashboard</Button>
               </Link>
             </CardFooter>
           </Card>
+        </div>
+
+        <div>
+          <Link href='/send-mail' className='flex justify-center p-2'>
+          <Button className='max-w-4xl mx-auto mt-5'>
+            Recruiter Invitation
+          </Button>
+          </Link>
         </div>
       </main>
 
       <footer className="border-t py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground flex flex-col items-center">
           <span>© {new Date().getFullYear()} Placement Cell. All rights reserved.</span>
-          <a className="text-sm">Developed By Divyanshu Sharma</a>
+          <a className="text-sm">Developed By Placement Team</a>
         </div>
       </footer>
     </div>

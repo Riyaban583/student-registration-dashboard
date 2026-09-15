@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -8,35 +8,71 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut } from 'lucide-react';
+import { GraduationCap, ArrowLeft, QrCode, CheckCircle, XCircle, LogOut, ArrowRight, BarChart3, RefreshCw } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
-import {Html5QrcodeScanner} from 'html5-qrcode';
 import EventManager from '@/components/event/Events';
+import { useQrScanner } from '@/hooks/useQrScanner';
+import { QrScannerCard } from '@/components/scanner/QrScannerCard';
+
 export default function ScannerPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<null | { success: boolean; message: string; user?: any }>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scannerSupported, setScannerSupported] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
-
-    const handleScan = async (decodedText: string) => {
-    if (!decodedText) return;
-    setScanning(false);
-
+  const fetchUsers = useCallback(async () => {
     try {
-      const url = decodedText.trim();
-      const urlObj = new URL(url);
-      const segments = urlObj.pathname.split("/");
-      const userId = segments.pop();
+      const result = await getAllUsers();
+      if (result.success) {
+        setUsers(result.users || []);
+      } else {
+        throw new Error(result.error || "Failed to fetch users");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [toast]);
 
-      if (!userId) {
-        setScanResult({ success: false, message: "Invalid QR code" });
+  const handleScanProcess = useCallback(async (decodedText: string) => {
+    try {
+      let userId = "";
+      const text = decodedText.trim();
+
+      // Flexible extraction: handles URLs or raw strings
+      if (text.includes("/scan/")) {
+        userId = text.split("/scan/").pop()?.split(/[?#]/)[0] || "";
+      } else if (text.startsWith("http")) {
+        try {
+          const urlObj = new URL(text);
+          userId = urlObj.pathname.split("/").filter(Boolean).pop() || "";
+        } catch (e) {
+          userId = text.split("/").pop() || "";
+        }
+      } else {
+        userId = text; // Assume it's a raw ID
+      }
+
+      if (!userId || userId.length < 5) {
+        console.warn("Extracted ID looks invalid:", userId);
         return;
       }
 
@@ -49,66 +85,27 @@ export default function ScannerPage() {
 
       if (attendanceResult.success) {
         toast({ title: "Success", description: attendanceResult.message });
-
-        const usersResult = await getAllUsers();
-        if (usersResult.success) setUsers(usersResult.users || []);
+        await fetchUsers();
       } else {
-        throw new Error(attendanceResult.error || "Failed to mark attendance");
+        toast({ variant: "destructive", title: "Scan Error", description: attendanceResult.error });
       }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      console.error("Scan processing error:", error);
+      toast({ variant: "destructive", title: "Scan Error", description: error.message });
     }
-  };
+  }, [toast, fetchUsers]);
+
+  const { scanning, setScanning, scanResult, setScanResult } = useQrScanner({
+    onScan: handleScanProcess
+  });
+
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const result = await getAllUsers();
-        if (result.success) {
-          setUsers(result.users || []);
-        } else {
-          throw new Error(result.error || "Failed to fetch users");
-        }
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchUsers();
-  }, [toast]);
-  useEffect(() => {
-    if (scanning) {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        false // Set verbose mode (true for debugging, false for normal use)
-      );
-      
-      scanner.render(handleScan, (errorMessage:any) => {
-        console.warn(errorMessage);
-      });
+  }, [fetchUsers]);
 
-      return () => {
-        scanner.clear();
-      };
-    }
-  }, [scanning]);
-
-  const handleError = (err: any) => {
-    console.error(err);
-    toast({
-      variant: "destructive",
-      title: "Scanner Error",
-      description: "Could not access camera or scanner encountered an error",
-    });
-    setScanning(false);
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchUsers();
   };
 
   const handleLogout = async () => {
@@ -120,8 +117,8 @@ export default function ScannerPage() {
   const getTodayAttendanceCount = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    return users.filter(user => 
+
+    return users.filter(user =>
       user.attendance && user.attendance.some((a: any) => {
         const attendanceDate = new Date(a.date);
         attendanceDate.setHours(0, 0, 0, 0);
@@ -135,7 +132,7 @@ export default function ScannerPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-          <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
+            <img src="/RTU logo.png" alt="Logo" className="h-8 w-8" />
             <h1 className="text-xl font-bold">Placement Cell</h1>
           </div>
           <div className="flex items-center space-x-2">
@@ -160,8 +157,26 @@ export default function ScannerPage() {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Admin Dashboard</h2>
-          
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Link href="/admin/scanner/review">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Get all registered students
+              </Button>
+            </Link>
+            <Link href="/admin/alumni">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Manage Alumni
+              </Button>
+            </Link>
+            <Link href="/admin/questions">
+              <Button variant="outline" size="sm">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Manage Drive Questions
+              </Button>
+            </Link>
+          </div>
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -171,7 +186,7 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{users.length}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Today's Attendance</CardTitle>
@@ -180,54 +195,28 @@ export default function ScannerPage() {
                 <p className="text-3xl font-bold">{getTodayAttendanceCount()}</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Attendance Rate</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">
-                  {users.length > 0 
-                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%` 
+                  {users.length > 0
+                    ? `${Math.round((getTodayAttendanceCount() / users.length) * 100)}%`
                     : '0%'}
                 </p>
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>QR Scanner</CardTitle>
-                <CardDescription>Scan student QR codes to mark attendance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {scanning ? (
-                  <div>
-                    <div id="qr-reader" className="w-full h-64" />
-                    <Button variant="outline" className="w-full mt-4" onClick={() => setScanning(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    {scanResult && (
-                      <Alert variant={scanResult.success ? "default" : "destructive"} className="mb-4">
-                        {scanResult.success ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
-                        <AlertTitle>{scanResult.success ? "Success" : "Error"}</AlertTitle>
-                        <AlertDescription>{scanResult.message}</AlertDescription>
-                      </Alert>
-                    )}
-                    <Button className="w-full" onClick={() => setScanning(true)}>
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Start Scanning
-                    </Button>
-                  </div>
-                )}
-                
-              </CardContent>
-            </Card>
-            
+            <QrScannerCard
+              scanning={scanning}
+              setScanning={setScanning}
+              scanResult={scanResult}
+            />
+
             <Card>
               <CardHeader>
                 <CardTitle>Today's Attendance</CardTitle>
@@ -253,7 +242,7 @@ export default function ScannerPage() {
                           .filter(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             return user.attendance && user.attendance.some((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
@@ -263,13 +252,13 @@ export default function ScannerPage() {
                           .map(user => {
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
-                            
+
                             const todayAttendance = user.attendance.find((a: any) => {
                               const attendanceDate = new Date(a.date);
                               attendanceDate.setHours(0, 0, 0, 0);
                               return attendanceDate.getTime() === today.getTime();
                             });
-                            
+
                             return (
                               <TableRow key={user.id}>
                                 <TableCell>{user.name}</TableCell>
@@ -283,19 +272,19 @@ export default function ScannerPage() {
                         {users.filter(user => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          
+
                           return user.attendance && user.attendance.some((a: any) => {
                             const attendanceDate = new Date(a.date);
                             attendanceDate.setHours(0, 0, 0, 0);
                             return attendanceDate.getTime() === today.getTime();
                           });
                         }).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
-                              No attendance records for today
-                            </TableCell>
-                          </TableRow>
-                        )}
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                No attendance records for today
+                              </TableCell>
+                            </TableRow>
+                          )}
                       </TableBody>
                     </Table>
                   </div>
@@ -305,19 +294,43 @@ export default function ScannerPage() {
           </div>
 
           <EventManager />
-          
+
           <Tabs value="all">
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Students</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all">
               <Card>
-                <CardHeader>
-                  <CardTitle>Student Records</CardTitle>
-                  <CardDescription>
-                    Complete list of registered students
-                  </CardDescription>
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>Student Records</CardTitle>
+                    <CardDescription>
+                      Complete list of registered students
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleManualRefresh}
+                      disabled={refreshing || loading}
+                      className="h-9 px-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      title="Refresh Student Records"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                      {refreshing ? "Refreshing..." : "Refresh"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStatsOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Branch-Wise Statistics
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -331,6 +344,7 @@ export default function ScannerPage() {
                           <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Roll Number</TableHead>
+                            <TableHead>Branch</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Total Attendance</TableHead>
                           </TableRow>
@@ -338,15 +352,26 @@ export default function ScannerPage() {
                         <TableBody>
                           {users.map(user => (
                             <TableRow key={user.id}>
-                              <TableCell>{user.name}</TableCell>
+                              <TableCell className="font-medium">{user.name}</TableCell>
                               <TableCell>{user.rollNumber}</TableCell>
+                              <TableCell>
+                                {user.branch ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                    {user.branch}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs italic">
+                                    Not Specified
+                                  </span>
+                                )}
+                              </TableCell>
                               <TableCell>{user.email}</TableCell>
                               <TableCell>{user.attendance ? user.attendance.length : 0}</TableCell>
                             </TableRow>
                           ))}
                           {users.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                                 No students registered yet
                               </TableCell>
                             </TableRow>
@@ -359,6 +384,80 @@ export default function ScannerPage() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Branch-Wise Statistics Popup Dialog */}
+          <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Branch-Wise Student Statistics
+                </DialogTitle>
+                <DialogDescription>
+                  Count of registered students categorized by branch
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-3">
+                {(() => {
+                  const branchStats = users.reduce((acc: Record<string, number>, user: any) => {
+                    const branch = user.branch && user.branch.trim() ? user.branch.trim() : 'Not Specified';
+                    acc[branch] = (acc[branch] || 0) + 1;
+                    return acc;
+                  }, {});
+
+                  const sortedBranchStats = Object.entries(branchStats).sort(
+                    ([aBranch, aCount], [bBranch, bCount]) => (bCount as number) - (aCount as number)
+                  );
+
+                  if (sortedBranchStats.length === 0) {
+                    return (
+                      <p className="text-center py-6 text-muted-foreground text-sm">
+                        No registered students found.
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <div className="divide-y rounded-lg border">
+                        {sortedBranchStats.map(([branch, count]) => (
+                          <div
+                            key={branch}
+                            className="flex items-center justify-between p-3.5 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground text-base">
+                                {branch}
+                              </span>
+                              {branch === 'Not Specified' && (
+                                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                  (Pending update)
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-muted-foreground font-bold">→</span>
+                              <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary border border-primary/20">
+                                {count}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 flex justify-between items-center text-xs text-muted-foreground px-1">
+                        <span>Total Branches: {sortedBranchStats.length}</span>
+                        <span className="font-semibold text-foreground">
+                          Total Students: {users.length}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
 
