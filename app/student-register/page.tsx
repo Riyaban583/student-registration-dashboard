@@ -49,22 +49,17 @@ const formSchema = z.object({
     .string()
     .min(3, { message: "Roll number must be at least 3 characters" }),
 
-    // new ga
-  //     cgpa: z.string().min(1, { message: "CGPA is required" }),
-  //     back: z.string().min(1, { message: "Back count is required" }),
-  //     summary: z.string().min(1, { message: "This field is required" }),
-  //       clubs: z.string().min(1, { message: "Clubs field is required" }),
-
-  //        aim: z.string().min(2, { message: "Aim is required" }),
-  // believe: z.string().min(2, { message: "This field is required" }),
-  // expect: z.string().min(2, { message: "This field is required" }),
-  // // domain: z.array(z.string()).min(1, { message: "Select at least one domain" }),
-  // domain: z
-  // .array(z.string())
-  // .min(1, { message: "Select at least one domain" })
-  // .max(2, { message: "You can select up to 2 domains only" }),
-
-     // new end 
+    cgpa: z.string().min(1, { message: "CGPA is required" }),
+    back: z.string().min(1, { message: "Back count is required" }),
+    summary: z.string().min(1, { message: "This field is required" }),
+    clubs: z.string().min(1, { message: "Clubs field is required" }),
+    aim: z.string().min(2, { message: "Aim is required" }),
+    believe: z.string().min(2, { message: "This field is required" }),
+    expect: z.string().min(2, { message: "This field is required" }),
+    domain: z
+      .array(z.string())
+      .min(1, { message: "Select at least one domain" })
+      .max(2, { message: "You can select up to 2 domains only" }),
 });
 
 export default function RegisterPage() {
@@ -90,22 +85,18 @@ export default function RegisterPage() {
       email: "",
       rollNumber: "",
       universityRollNo: "",
-      eventName: "",
+      eventName: "Core Team Recruitment",
       branch: "",
       year: "",
       phoneNumber: "",
-      
-      //new gagan
-    //    cgpa: "",           
-    // back: "",           
-    // summary: "", 
-    //  clubs: "",
-
-    //  aim: "",
-    // believe: "",
-    // expect: "",
-    // domain: [],
-    //new  end
+      cgpa: "",
+      back: "",
+      summary: "",
+      clubs: "",
+      aim: "",
+      believe: "",
+      expect: "",
+      domain: [],
     },
   });
 
@@ -160,7 +151,7 @@ export default function RegisterPage() {
        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-xl md:text-2xl">ARTICULATE</CardTitle>
+            <CardTitle className="text-xl md:text-2xl">PTP Core Team Recruitment</CardTitle>
             <CardDescription className="text-xs md:text-sm">
               Register Yourself to get your QR code
             </CardDescription>
@@ -276,47 +267,6 @@ export default function RegisterPage() {
 
                 <FormField
                   control={form.control}
-                  name="eventName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Name</FormLabel>
-                      <FormControl>
-                        {events.length > 0 ? (
-                          <select
-                            {...field}
-                            className="w-full border border-input rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                          >
-                            <option value="">Select an event</option>
-                            {events.map((event:any) => (
-                              <option key={event._id} value={event.eventName}>
-                                {event.eventName}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <select
-                            {...field}
-                            className="w-full border border-input rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                          >
-                            <option value="">Select an event</option>
-
-                              {/* <option value="Core Team Recruitment">
-                                Core Team Recruitment
-                              </option> */}
-                              <option value="ARTICULATE">
-                                ARTICULATE
-                              </option>
-
-                          </select>
-                        )}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="universityRollNo"
                   render={({ field }) => (
                     <FormItem>
@@ -344,7 +294,7 @@ export default function RegisterPage() {
                 />
 
 
-  {/* <FormField
+                <FormField
                   control={form.control}
                   name="cgpa"
                   render={({ field }) => (
@@ -358,7 +308,7 @@ export default function RegisterPage() {
                   )}
                 />
 
-                       <FormField
+                <FormField
                   control={form.control}
                   name="back"
                   render={({ field }) => (
@@ -372,7 +322,7 @@ export default function RegisterPage() {
                   )}
                 />
 
-               <FormField
+                <FormField
                   control={form.control}
                   name="summary"
                   render={({ field }) => (
@@ -386,12 +336,12 @@ export default function RegisterPage() {
                   )}
                 />
 
-                 <FormField
+                <FormField
                   control={form.control}
                   name="clubs"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel >Active in which Clubs? (Write NONE if not active in any )</FormLabel>
+                      <FormLabel>Active in which Clubs? (Write NONE if not active in any )</FormLabel>
                       <FormControl>
                         <Input placeholder="" {...field} />
                       </FormControl>
@@ -400,46 +350,40 @@ export default function RegisterPage() {
                   )}
                 />
 
-
-                
+                <FormField
+                  control={form.control}
+                  name="domain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Select your preferred domain(s)  [MAX:2]</FormLabel>
+                      <div className="grid grid-cols-2 gap-2">
+                        {["Management","Graphic Designer","Video Editing","Photography","Content Writer","HR HEAD","Web Developer(Next.js Preferred)"].map((domain) => (
+                          <label key={domain} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              value={domain}
+                              checked={field.value?.includes(domain)}
+                              onChange={(e) => {
+                                const currentValues = field.value || [];
+                                if (e.target.checked) {
+                                  if (currentValues.length < 2) {
+                                    field.onChange([...currentValues, domain]);
+                                  }
+                                } else {
+                                  field.onChange(currentValues.filter((d) => d !== domain));
+                                }
+                              }}
+                            />
+                            <span>{domain}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
-  control={form.control}
-  name="domain"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Select your preferred domain(s)  [MAX:2]</FormLabel>
-      <div className="grid grid-cols-2 gap-2">
-        {["Management","Graphic Designer","Video Editing","Photography","Content Writer","HR HEAD","Web Developer(Next.js Preferred)"].map((domain) => (
-          <label key={domain} className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              value={domain}
-              checked={field.value?.includes(domain)}
-              onChange={(e) => {
-                const currentValues = field.value || [];
-                if (e.target.checked) {
-                  // Allow adding only if less than 2 already selected
-                  if (currentValues.length < 2) {
-                    field.onChange([...currentValues, domain]);
-                  }
-                } else {
-                  // Remove if unchecked
-                  field.onChange(currentValues.filter((d) => d !== domain));
-                }
-              }}
-            />
-            <span>{domain}</span>
-          </label>
-        ))}
-      </div>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-
-  
-               <FormField
                   control={form.control}
                   name="aim"
                   render={({ field }) => (
@@ -452,7 +396,8 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-               <FormField
+
+                <FormField
                   control={form.control}
                   name="believe"
                   render={({ field }) => (
@@ -465,7 +410,8 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-               <FormField
+
+                <FormField
                   control={form.control}
                   name="expect"
                   render={({ field }) => (
@@ -478,7 +424,6 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
- */}
 
                 <Button
                   type="submit"
