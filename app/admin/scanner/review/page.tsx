@@ -132,7 +132,12 @@ const [open, setOpen] = useState(false);
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Link href="/admin/analytics">
+          <Button variant="outline" size="sm" className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white">
+            Analytics Dashboard
+          </Button>
+        </Link>
         <Link href="/">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
