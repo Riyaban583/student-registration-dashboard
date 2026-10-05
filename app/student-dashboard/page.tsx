@@ -257,7 +257,7 @@ useEffect(() => {
                 <CardContent>
                   <dl className="space-y-3 text-sm">
                     <div>
-                       <a href="https://chat.whatsapp.com/JZToUVRAWuZKIeHH1LiWfk?mode=gi_t" className="hover:underline bg-gray-200 px-3 py-2 mb-2 rounded-lg text-black font-semibold" target="_blank" rel="noopener noreferrer">
+                       <a href="https://chat.whatsapp.com/GL20pqoZgFNKTTKL6emzBX" className="hover:underline bg-gray-200 px-3 py-2 mb-2 rounded-lg text-black font-semibold" target="_blank" rel="noopener noreferrer">
               Join Whatsapp Group
             </a>
                       <dt className="font-medium text-muted-foreground mt-3">
