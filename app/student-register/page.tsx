@@ -53,6 +53,7 @@ const formSchema = z.object({
     back: z.string().min(1, { message: "Back count is required" }),
     summary: z.string().min(1, { message: "This field is required" }),
     clubs: z.string().min(1, { message: "Clubs field is required" }),
+    linkedin: z.string().min(1, { message: "LinkedIn URL is required" }),
     aim: z.string().min(2, { message: "Aim is required" }),
     believe: z.string().min(2, { message: "This field is required" }),
     expect: z.string().min(2, { message: "This field is required" }),
@@ -93,6 +94,7 @@ export default function RegisterPage() {
       back: "",
       summary: "",
       clubs: "",
+      linkedin: "",
       aim: "",
       believe: "",
       expect: "",
@@ -352,6 +354,20 @@ export default function RegisterPage() {
 
                 <FormField
                   control={form.control}
+                  name="linkedin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>LinkedIn URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://linkedin.com/in/..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="domain"
                   render={({ field }) => {
                     const domainDescriptions: Record<string, string> = {
@@ -374,8 +390,8 @@ export default function RegisterPage() {
                                 key={domain}
                                 className={`rounded-lg border p-3 transition-all duration-200 ${
                                   isChecked
-                                    ? "border-blue-500 bg-blue-950/40 shadow-md shadow-blue-900/20"
-                                    : "border-gray-700 bg-gray-900/50 hover:border-gray-500"
+                                    ? "border-blue-500 bg-blue-50 shadow-md dark:bg-blue-950/40 dark:shadow-blue-900/20"
+                                    : "border-gray-200 bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:border-gray-500"
                                 }`}
                               >
                                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -395,10 +411,10 @@ export default function RegisterPage() {
                                     }}
                                     className="accent-blue-500"
                                   />
-                                  <span className={`font-medium ${isChecked ? "text-blue-300" : ""}`}>{domain}</span>
+                                  <span className={`font-medium ${isChecked ? "text-blue-700 dark:text-blue-300" : ""}`}>{domain}</span>
                                 </label>
                                 {isChecked && (
-                                  <p className="mt-2 ml-6 text-sm text-gray-400 leading-relaxed animate-in fade-in duration-300">
+                                  <p className="mt-2 ml-6 text-sm text-gray-600 dark:text-gray-400 leading-relaxed animate-in fade-in duration-300">
                                     {domainDescriptions[domain]}
                                   </p>
                                 )}

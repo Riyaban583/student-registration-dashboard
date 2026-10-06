@@ -45,6 +45,7 @@ interface Student {
   back: string;
   summary: string;
   clubs: string;
+  linkedin: string;
   aim: string;
   believe: string;
   expect: string;
@@ -344,6 +345,14 @@ const [open, setOpen] = useState(false);
               <span className="font-semibold text-gray-50">Phone:</span>
               <span>{selectedStudent.phoneNumber}</span>
             </div>
+            {selectedStudent.linkedin && (
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-50">LinkedIn:</span>
+                <a href={selectedStudent.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate max-w-[150px]">
+                  {selectedStudent.linkedin}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 

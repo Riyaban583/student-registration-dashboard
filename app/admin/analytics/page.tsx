@@ -65,6 +65,7 @@ export default function AnalyticsDashboard() {
       "Active Backlogs": s.back,
       "Domains": s.domain?.join(", ") || "",
       "Clubs": s.clubs,
+      "LinkedIn": s.linkedin,
       "Why should we have you in PTP?": s.summary,
       "Aim": s.aim,
       "What do you believe in?": s.believe,
