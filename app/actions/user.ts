@@ -358,18 +358,24 @@ export async function logout() {
 
 
 export async function registerStudents(studentData: {
-  name: string, email: string, rollNumber: string, universityRollNo: string, eventName: string, branch: string, phoneNumber: string,
-  //new ga
-  //  cgpa: string,  
-  // back: string,
-  // summary: string,
-  //  clubs: string,
-
-  //   aim: string,
-  // believe: string,
-  // expect: string,
-  // domain: string[],
-  //new  end 
+  name: string;
+  email: string;
+  rollNumber: string;
+  universityRollNo: string;
+  eventName: string;
+  branch: string;
+  phoneNumber: string;
+  year?: string;
+  linkedin?: string;
+  cgpa?: string;
+  back?: string;
+  summary?: string;
+  clubs?: string;
+  aim?: string;
+  believe?: string;
+  expect?: string;
+  domain?: string[];
+  [key: string]: any;
 }) {
   try {
     await connectToDatabase();
@@ -455,6 +461,15 @@ export async function getStudentByEmail(email: string) {
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
+        linkedin: user.linkedin || "",
+        cgpa: user.cgpa || "",
+        back: user.back || "",
+        summary: user.summary || "",
+        clubs: user.clubs || "",
+        aim: user.aim || "",
+        believe: user.believe || "",
+        expect: user.expect || "",
+        domain: user.domain || [],
       }
     };
   } catch (error) {
@@ -493,6 +508,15 @@ export async function getStudentById(userId: string) {
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
+        linkedin: user.linkedin || "",
+        cgpa: user.cgpa || "",
+        back: user.back || "",
+        summary: user.summary || "",
+        clubs: user.clubs || "",
+        aim: user.aim || "",
+        believe: user.believe || "",
+        expect: user.expect || "",
+        domain: user.domain || [],
       }
     };
   } catch (error) {
@@ -532,6 +556,7 @@ export const getAllRecruitments = async () => {
         believe: user.believe || "",
         expect: user.expect || "",
         domain: user.domain || [],
+        linkedin: user.linkedin || "",
         review: user.review ?? null,
         comment: user.comment ?? "",
         roundOneAttendance: user.roundOneAttendance,

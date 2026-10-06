@@ -49,6 +49,7 @@ interface Student {
   believe: string;
   expect: string;
   domain: string[];
+  linkedin?: string;
   review?: number;
   comment?: string;
   roundOneAttendance?: boolean;
@@ -344,6 +345,19 @@ const [open, setOpen] = useState(false);
               <span className="font-semibold text-gray-50">Phone:</span>
               <span>{selectedStudent.phoneNumber}</span>
             </div>
+            {selectedStudent.linkedin && (
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-50">LinkedIn:</span>
+                <a
+                  href={selectedStudent.linkedin.startsWith("http") ? selectedStudent.linkedin : `https://${selectedStudent.linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline text-sm font-medium"
+                >
+                  View Profile
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
