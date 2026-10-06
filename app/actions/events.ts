@@ -23,7 +23,7 @@ export async function createEvent(eventName: string, eventDate: string) {
     await newEvent.save();
     console.log("Event created:", newEvent);
     return JSON.parse(JSON.stringify({
-      _id: newEvent._id.toString(),
+      _id: String(newEvent._id),
       eventName: newEvent.eventName,
       eventDate: newEvent.eventDate,
       attendance: newEvent.attendance || [],
@@ -59,7 +59,7 @@ export async function deleteEvent(id: string) {
     }
     console.log("Event deleted:", deletedEvent);
     return JSON.parse(JSON.stringify({
-      _id: deletedEvent._id.toString(),
+      _id: String(deletedEvent._id),
       eventName: deletedEvent.eventName,
       eventDate: deletedEvent.eventDate,
     }));
@@ -83,14 +83,14 @@ export async function markStudentAttendence(userId: string) {
  
 
     // Security Fix: Use exact match on scanId to avoid regex injection
-    let user = await Students.findOne({ scanId: userId });
+    let user = await Students.findOne({ scanId: userId }) as any;
 
     // Fallback for old records without scanId (using escaped regex)
     if (!user) {
       const escapedId = escapeRegex(userId);
       user = await Students.findOne({
         qrCode: { $regex: new RegExp(`/scan/${escapedId}$`, 'i') }
-      });
+      }) as any;
     }
 
     if (!user) {
@@ -115,7 +115,7 @@ export async function markStudentAttendence(userId: string) {
         success: true,
         message: 'Attendance already marked for today',
         user: {
-          id: user._id.toString(),
+          id: String(user._id),
           name: user.name,
           rollNumber: user.rollNumber
         }
@@ -141,7 +141,7 @@ export async function markStudentAttendence(userId: string) {
       success: true,
       message: 'Attendance marked successfully',
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         rollNumber: user.rollNumber
       }

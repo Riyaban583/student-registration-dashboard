@@ -41,7 +41,7 @@ export async function addAlumni(alumniData: {
     return {
       success: true,
       alumni: {
-        id: newAlumni._id.toString(),
+        id: String(newAlumni._id),
         name: newAlumni.name,
         company: newAlumni.company,
       }
@@ -91,7 +91,7 @@ export async function getAlumni() {
     return {
       success: true,
       alumni: alumni.map((a: any) => ({
-        id: a._id.toString(),
+        id: String(a._id),
         name: a.name,
         batch: a.batch,
         branch: a.branch,

@@ -65,7 +65,10 @@ export default function AnalyticsDashboard() {
       "Active Backlogs": s.back,
       "Domains": s.domain?.join(", ") || "",
       "Clubs": s.clubs,
+      "Why should we have you in PTP?": s.summary,
       "Aim": s.aim,
+      "What do you believe in?": s.believe,
+      "What do you expect?": s.expect,
       "Review Score": s.review || "Not reviewed",
     }));
 
