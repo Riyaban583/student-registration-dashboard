@@ -48,7 +48,7 @@ export async function registerUser(userData: { name: string; email: string; roll
 
     return {
       success: true,
-      userId: newUser._id.toString()
+      userId: (newUser as any)._id.toString()
     };
   } catch (error) {
     console.error('Error registering user:', error);
@@ -413,7 +413,7 @@ export async function registerStudents(studentData: {
 
     return {
       success: true,
-      userId: newUser._id.toString()
+      userId: (newUser as any)._id.toString()
     };
   } catch (error) {
     console.error('Error registering user:', error);
