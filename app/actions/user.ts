@@ -48,7 +48,7 @@ export async function registerUser(userData: { name: string; email: string; roll
 
     return {
       success: true,
-      userId: String((newUser as any)._id)
+      userId: newUser._id.toString()
     };
   } catch (error) {
     console.error('Error registering user:', error);
@@ -72,7 +72,7 @@ export async function getUserById(userId: string) {
     return {
       success: true,
       user: {
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -110,7 +110,7 @@ export async function getUserByRollNumber(rollNumber: string) {
     return {
       success: true,
       user: {
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -165,7 +165,7 @@ export async function getUserByRollNumber(rollNumber: string) {
 //         success: true, 
 //         message: 'Attendance already marked for today',
 //         user: {
-//           id: String(user._id),
+//           id: user._id.toString(),
 //           name: user.name,
 //           rollNumber: user.rollNumber
 //         }
@@ -185,7 +185,7 @@ export async function getUserByRollNumber(rollNumber: string) {
 //       success: true, 
 //       message: 'Attendance marked successfully',
 //       user: {
-//         id: String(user._id),
+//         id: user._id.toString(),
 //         name: user.name,
 //         rollNumber: user.rollNumber
 //       }
@@ -259,7 +259,7 @@ export async function markAttendance(userId: string) {
         success: true,
         message: 'Attendance already marked for today',
         user: {
-          id: String(user._id),
+          id: user._id.toString(),
           name: user.name,
           rollNumber: user.rollNumber
         }
@@ -279,7 +279,7 @@ export async function markAttendance(userId: string) {
       success: true,
       message: 'Attendance marked successfully',
       user: {
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         rollNumber: user.rollNumber
       }
@@ -299,7 +299,7 @@ export async function getAllUsers() {
     return {
       success: true,
       users: users.map((user: any) => ({
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -358,17 +358,24 @@ export async function logout() {
 
 
 export async function registerStudents(studentData: {
-  name: string, email: string, rollNumber: string, universityRollNo: string, eventName: string, branch: string, year: string, phoneNumber: string,
-  //new ga
-  cgpa: string,  
-  back: string,
-  summary: string,
-  clubs: string,
-  aim: string,
-  believe: string,
-  expect: string,
-  domain: string[],
-  //new  end 
+  name: string;
+  email: string;
+  rollNumber: string;
+  universityRollNo: string;
+  eventName: string;
+  branch: string;
+  phoneNumber: string;
+  year?: string;
+  linkedin?: string;
+  cgpa?: string;
+  back?: string;
+  summary?: string;
+  clubs?: string;
+  aim?: string;
+  believe?: string;
+  expect?: string;
+  domain?: string[];
+  [key: string]: any;
 }) {
   try {
     await connectToDatabase();
@@ -413,7 +420,7 @@ export async function registerStudents(studentData: {
 
     return {
       success: true,
-      userId: String((newUser as any)._id)
+      userId: newUser._id.toString()
     };
   } catch (error) {
     console.error('Error registering user:', error);
@@ -440,7 +447,7 @@ export async function getStudentByEmail(email: string) {
     return {
       success: true,
       user: {
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         branch: user.branch,
@@ -454,6 +461,15 @@ export async function getStudentByEmail(email: string) {
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
+        linkedin: user.linkedin || "",
+        cgpa: user.cgpa || "",
+        back: user.back || "",
+        summary: user.summary || "",
+        clubs: user.clubs || "",
+        aim: user.aim || "",
+        believe: user.believe || "",
+        expect: user.expect || "",
+        domain: user.domain || [],
       }
     };
   } catch (error) {
@@ -478,7 +494,7 @@ export async function getStudentById(userId: string) {
     return {
       success: true,
       user: {
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -492,6 +508,15 @@ export async function getStudentById(userId: string) {
           date: a.date instanceof Date ? a.date.toISOString() : a.date,
           present: a.present,
         })),
+        linkedin: user.linkedin || "",
+        cgpa: user.cgpa || "",
+        back: user.back || "",
+        summary: user.summary || "",
+        clubs: user.clubs || "",
+        aim: user.aim || "",
+        believe: user.believe || "",
+        expect: user.expect || "",
+        domain: user.domain || [],
       }
     };
   } catch (error) {
@@ -509,7 +534,7 @@ export const getAllRecruitments = async () => {
     return {
       success: true,
       students: students.map((user: any) => ({
-        id: String(user._id),
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -531,6 +556,7 @@ export const getAllRecruitments = async () => {
         believe: user.believe || "",
         expect: user.expect || "",
         domain: user.domain || [],
+        linkedin: user.linkedin || "",
         review: user.review ?? null,
         comment: user.comment ?? "",
         roundOneAttendance: user.roundOneAttendance,
@@ -612,7 +638,7 @@ export async function updateUserInfo(
       return {
         success: true,
         user: {
-          id: String(user._id),
+          id: user._id.toString(),
           name: user.name,
           email: user.email,
           rollNumber: user.rollNumber,
@@ -638,7 +664,7 @@ export async function updateUserInfo(
       return {
         success: true,
         user: {
-          id: String(student._id),
+          id: student._id.toString(),
           name: student.name,
           email: student.email,
           rollNumber: student.rollNumber,

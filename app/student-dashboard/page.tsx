@@ -44,15 +44,15 @@ interface User {
     present: boolean;
   }[];
 
-  // ga
-  // cgpa: string;
-  // back: string;
-  // summary: string;
-  // clubs: string;
-  // aim: string;
-  // believe: string;
-  // expect: string;
-  // domain: string[];
+  cgpa?: string;
+  back?: string;
+  summary?: string;
+  clubs?: string;
+  aim?: string;
+  believe?: string;
+  expect?: string;
+  domain?: string[];
+  linkedin?: string;
 }
 
 export default function DashboardPage() {
@@ -316,55 +316,52 @@ useEffect(() => {
                         {user.eventName}
                       </dd>
                     </div>
+                    {user.linkedin && (
+                      <div className="pt-2">
+                        <dt className="font-medium text-muted-foreground">LinkedIn</dt>
+                        <dd>
+                          <a
+                            href={user.linkedin.startsWith("http") ? user.linkedin : `https://${user.linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium text-sm"
+                          >
+                            View LinkedIn Profile
+                          </a>
+                        </dd>
+                      </div>
+                    )}
+                    {user.cgpa && (
+                      <div>
+                        <dt className="font-medium text-muted-foreground">CGPA</dt>
+                        <dd>{user.cgpa}</dd>
+                      </div>
+                    )}
+                    {user.back && (
+                      <div>
+                        <dt className="font-medium text-muted-foreground">Active Backlogs</dt>
+                        <dd>{user.back}</dd>
+                      </div>
+                    )}
+                    {user.domain && user.domain.length > 0 && (
+                      <div>
+                        <dt className="font-medium text-muted-foreground">Selected Domains</dt>
+                        <dd>{user.domain.join(', ')}</dd>
+                      </div>
+                    )}
+                    {user.clubs && (
+                      <div>
+                        <dt className="font-medium text-muted-foreground">Clubs</dt>
+                        <dd>{user.clubs}</dd>
+                      </div>
+                    )}
+                    {user.aim && (
+                      <div>
+                        <dt className="font-medium text-muted-foreground">Aim</dt>
+                        <dd className="whitespace-pre-line break-words">{user.aim}</dd>
+                      </div>
+                    )}
                   </dl>
-                  {/* new ga  */}
-
-          {/* <div>
-
-           
-      <dt className="font-medium text-muted-foreground mt-2">CGPA</dt>
-      <dd className="truncate">{user.cgpa}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Backlogs</dt>
-      <dd className="truncate">{user.back}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Why should we have you in PTP ?</dt>
-      <dd className="whitespace-pre-line break-words">{user.summary}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Clubs</dt>
-      <dd className="whitespace-pre-line break-words">{user.clubs}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Aim</dt>
-      <dd className="whitespace-pre-line break-words">{user.aim}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Do you believe joining the PTP will lead to placement opportunity?</dt>
-      <dd className="whitespace-pre-line break-words">{user.believe}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">What do you expect from PTP?</dt>
-      <dd className="whitespace-pre-line break-words">{user.expect}</dd>
-    </div>
-
-    <div>
-      <dt className="font-medium text-muted-foreground mt-2">Selected Domains</dt>
-      <dd className="whitespace-pre-line break-words">
-        {user.domain && user.domain.length > 0
-          ? user.domain.join(', ')
-          : 'N/A'}
-      </dd>
-    </div> */}
-          {/*  end  */}
 
                 </CardContent>
               </Card>
