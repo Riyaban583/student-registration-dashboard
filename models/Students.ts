@@ -15,6 +15,7 @@ export interface IStudent extends Document {
   back: string;
   summary: string;
   clubs: string;
+  linkedin: string;
   aim: string;
   believe: string;
   expect: string;
@@ -96,6 +97,7 @@ const StudentSchema = new Schema<IStudent>(
     back: { type: String, required: true, trim: true },
     summary: { type: String, required: true, trim: true },
     clubs: { type: String, required: true, trim: true },
+    linkedin: { type: String, required: true, trim: true },
     aim: { type: String, required: true, trim: true },
     believe: { type: String, required: true, trim: true },
     expect: { type: String, required: true, trim: true },
