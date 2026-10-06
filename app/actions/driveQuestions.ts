@@ -110,7 +110,7 @@ export async function getDriveQuestions(filters?: {
     return {
       success: true,
       questions: questions.map((q: any) => ({
-        id: q._id.toString(),
+        id: String(q._id),
         company: q.company,
         branch: q.branch,
         role: q.role || 'General',
@@ -188,7 +188,7 @@ export async function addDriveQuestion(data: DriveQuestionInput) {
 
     return {
       success: true,
-      questionId: newQuestion._id.toString(),
+      questionId: String(newQuestion._id),
     };
   } catch (error) {
     console.error('Error adding drive question:', error);

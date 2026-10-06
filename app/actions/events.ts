@@ -23,7 +23,7 @@ export async function createEvent(eventName: string, eventDate: string) {
     await newEvent.save();
     console.log("Event created:", newEvent);
     return JSON.parse(JSON.stringify({
-      _id: newEvent._id.toString(),
+      _id: String(newEvent._id),
       eventName: newEvent.eventName,
       eventDate: newEvent.eventDate,
       attendance: newEvent.attendance || [],
@@ -59,7 +59,7 @@ export async function deleteEvent(id: string) {
     }
     console.log("Event deleted:", deletedEvent);
     return JSON.parse(JSON.stringify({
-      _id: deletedEvent._id.toString(),
+      _id: String(deletedEvent._id),
       eventName: deletedEvent.eventName,
       eventDate: deletedEvent.eventDate,
     }));
@@ -115,7 +115,7 @@ export async function markStudentAttendence(userId: string) {
         success: true,
         message: 'Attendance already marked for today',
         user: {
-          id: user._id.toString(),
+          id: String(user._id),
           name: user.name,
           rollNumber: user.rollNumber
         }
@@ -141,7 +141,7 @@ export async function markStudentAttendence(userId: string) {
       success: true,
       message: 'Attendance marked successfully',
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         rollNumber: user.rollNumber
       }

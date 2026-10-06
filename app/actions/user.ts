@@ -48,7 +48,7 @@ export async function registerUser(userData: { name: string; email: string; roll
 
     return {
       success: true,
-      userId: (newUser as any)._id.toString()
+      userId: String((newUser as any)._id)
     };
   } catch (error) {
     console.error('Error registering user:', error);
@@ -72,7 +72,7 @@ export async function getUserById(userId: string) {
     return {
       success: true,
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -110,7 +110,7 @@ export async function getUserByRollNumber(rollNumber: string) {
     return {
       success: true,
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -165,7 +165,7 @@ export async function getUserByRollNumber(rollNumber: string) {
 //         success: true, 
 //         message: 'Attendance already marked for today',
 //         user: {
-//           id: user._id.toString(),
+//           id: String(user._id),
 //           name: user.name,
 //           rollNumber: user.rollNumber
 //         }
@@ -185,7 +185,7 @@ export async function getUserByRollNumber(rollNumber: string) {
 //       success: true, 
 //       message: 'Attendance marked successfully',
 //       user: {
-//         id: user._id.toString(),
+//         id: String(user._id),
 //         name: user.name,
 //         rollNumber: user.rollNumber
 //       }
@@ -259,7 +259,7 @@ export async function markAttendance(userId: string) {
         success: true,
         message: 'Attendance already marked for today',
         user: {
-          id: user._id.toString(),
+          id: String(user._id),
           name: user.name,
           rollNumber: user.rollNumber
         }
@@ -279,7 +279,7 @@ export async function markAttendance(userId: string) {
       success: true,
       message: 'Attendance marked successfully',
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         rollNumber: user.rollNumber
       }
@@ -299,7 +299,7 @@ export async function getAllUsers() {
     return {
       success: true,
       users: users.map((user: any) => ({
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -413,7 +413,7 @@ export async function registerStudents(studentData: {
 
     return {
       success: true,
-      userId: (newUser as any)._id.toString()
+      userId: String((newUser as any)._id)
     };
   } catch (error) {
     console.error('Error registering user:', error);
@@ -440,7 +440,7 @@ export async function getStudentByEmail(email: string) {
     return {
       success: true,
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         branch: user.branch,
@@ -478,7 +478,7 @@ export async function getStudentById(userId: string) {
     return {
       success: true,
       user: {
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -509,7 +509,7 @@ export const getAllRecruitments = async () => {
     return {
       success: true,
       students: students.map((user: any) => ({
-        id: user._id.toString(),
+        id: String(user._id),
         name: user.name,
         email: user.email,
         rollNumber: user.rollNumber,
@@ -612,7 +612,7 @@ export async function updateUserInfo(
       return {
         success: true,
         user: {
-          id: user._id.toString(),
+          id: String(user._id),
           name: user.name,
           email: user.email,
           rollNumber: user.rollNumber,
@@ -638,7 +638,7 @@ export async function updateUserInfo(
       return {
         success: true,
         user: {
-          id: student._id.toString(),
+          id: String(student._id),
           name: student.name,
           email: student.email,
           rollNumber: student.rollNumber,
