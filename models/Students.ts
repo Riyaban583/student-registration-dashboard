@@ -11,7 +11,6 @@ export interface IStudent extends Document {
   year: string;
   phoneNumber: string;
 
-<<<<<<< HEAD
   cgpa?: string;
   back?: string;
   summary?: string;
@@ -21,16 +20,6 @@ export interface IStudent extends Document {
   expect?: string;
   domain?: string[];
   linkedin?: string;
-=======
-  cgpa: string;
-  back: string;
-  summary: string;
-  clubs: string;
-  aim: string;
-  believe: string;
-  expect: string;
-  domain: string[];
->>>>>>> origin/main
 
   qrCode: string;
   scanId: string;
@@ -103,7 +92,6 @@ const StudentSchema = new Schema<IStudent>(
       trim: true,
     },
 
-<<<<<<< HEAD
     // Recruitment fields
     cgpa: { type: String, trim: true },
     back: { type: String, trim: true },
@@ -114,18 +102,6 @@ const StudentSchema = new Schema<IStudent>(
     expect: { type: String, trim: true },
     domain: { type: [String], default: [] },
     linkedin: { type: String, trim: true },
-=======
-    //new start gagan
-    cgpa: { type: String, required: true, trim: true },
-    back: { type: String, required: true, trim: true },
-    summary: { type: String, required: true, trim: true },
-    clubs: { type: String, required: true, trim: true },
-    aim: { type: String, required: true, trim: true },
-    believe: { type: String, required: true, trim: true },
-    expect: { type: String, required: true, trim: true },
-    domain: { type: [String], required: true, default: [] },
-    //new end
->>>>>>> origin/main
 
     qrCode: {
       type: String,
@@ -159,9 +135,4 @@ comment: { type: String, default: "" },
   }
 );
 
-// Delete cached model in dev to pick up schema changes
-if (mongoose.models.Students) {
-  delete mongoose.models.Students;
-}
-
-export default mongoose.model<IStudent>('Students', StudentSchema);
+export default mongoose.models.Students || mongoose.model<IStudent>('Students', StudentSchema);

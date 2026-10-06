@@ -481,7 +481,6 @@ export default function RegisterPage() {
                   control={form.control}
                   name="domain"
                   render={({ field }) => {
-<<<<<<< HEAD
                     const selectedDomains = field.value || [];
                     const isMaxReached = selectedDomains.length >= 2;
 
@@ -622,56 +621,6 @@ export default function RegisterPage() {
                                     )}
                                   </div>
                                 </div>
-=======
-                    const domainDescriptions: Record<string, string> = {
-                      "HR Head": "Leads internal team operations, student grievance handling, and performance tracking. Coordinates seamless communication between company HRs, faculty, and student coordinators.",
-                      "Research & Networking": "Analyzes hiring trends, industry demands, and market insights to target prospective recruiters. Builds and nurtures strategic relationships with alumni and corporate partners for campus drives.",
-                      "Management": "Oversees on-ground drive execution, scheduling, venue logistics, and hospitality for visiting corporate teams. Ensures disciplined crowd handling and smooth operational flow during recruitment processes.",
-                      "Photography & Videography": "Documents placement drives, corporate talks, workshops, and student success stories through high-quality visual coverage. Produces event reels, recap videos, and promotional footage for the cell's official media.",
-                      "Graphic": "Designs high-impact promotional posters, brochures, placement achievement creatives, and official reports. Ensures consistent visual branding across all official announcements and social media handles.",
-                      "Web dev": "Builds, deploys, and maintains the official placement portal and drive registration systems. Manages candidate databases, automates eligibility tracking, and ensures a secure, reliable user experience.",
-                    };
-
-                    return (
-                      <FormItem>
-                        <FormLabel>Select your preferred domain(s)  [MAX:2]</FormLabel>
-                        <div className="grid grid-cols-1 gap-3">
-                          {Object.keys(domainDescriptions).map((domain) => {
-                            const isChecked = field.value?.includes(domain);
-                            return (
-                              <div
-                                key={domain}
-                                className={`rounded-lg border p-3 transition-all duration-200 ${
-                                  isChecked
-                                    ? "border-blue-500 bg-blue-950/40 shadow-md shadow-blue-900/20"
-                                    : "border-gray-700 bg-gray-900/50 hover:border-gray-500"
-                                }`}
-                              >
-                                <label className="flex items-center space-x-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    value={domain}
-                                    checked={isChecked}
-                                    onChange={(e) => {
-                                      const currentValues = field.value || [];
-                                      if (e.target.checked) {
-                                        if (currentValues.length < 2) {
-                                          field.onChange([...currentValues, domain]);
-                                        }
-                                      } else {
-                                        field.onChange(currentValues.filter((d) => d !== domain));
-                                      }
-                                    }}
-                                    className="accent-blue-500"
-                                  />
-                                  <span className={`font-medium ${isChecked ? "text-blue-300" : ""}`}>{domain}</span>
-                                </label>
-                                {isChecked && (
-                                  <p className="mt-2 ml-6 text-sm text-gray-400 leading-relaxed animate-in fade-in duration-300">
-                                    {domainDescriptions[domain]}
-                                  </p>
-                                )}
->>>>>>> origin/main
                               </div>
                             );
                           })}
