@@ -358,17 +358,16 @@ export async function logout() {
 
 
 export async function registerStudents(studentData: {
-  name: string, email: string, rollNumber: string, universityRollNo: string, eventName: string, branch: string, phoneNumber: string,
+  name: string, email: string, rollNumber: string, universityRollNo: string, eventName: string, branch: string, year: string, phoneNumber: string,
   //new ga
-  //  cgpa: string,  
-  // back: string,
-  // summary: string,
-  //  clubs: string,
-
-  //   aim: string,
-  // believe: string,
-  // expect: string,
-  // domain: string[],
+  cgpa: string,  
+  back: string,
+  summary: string,
+  clubs: string,
+  aim: string,
+  believe: string,
+  expect: string,
+  domain: string[],
   //new  end 
 }) {
   try {

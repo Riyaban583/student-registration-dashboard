@@ -11,14 +11,14 @@ export interface IStudent extends Document {
   year: string;
   phoneNumber: string;
 
-  // cgpa: string;
-  // back: string;
-  // summary: string;
-  // clubs: string;
-  // aim: string;
-  // believe: string;
-  // expect: string;
-  // domain: string[];
+  cgpa: string;
+  back: string;
+  summary: string;
+  clubs: string;
+  aim: string;
+  believe: string;
+  expect: string;
+  domain: string[];
 
   qrCode: string;
   scanId: string;
@@ -92,14 +92,14 @@ const StudentSchema = new Schema<IStudent>(
     },
 
     //new start gagan
-    // cgpa: { type: String, required: true, trim: true },
-    // back: { type: String, required: true, trim: true },
-    // summary: { type: String, required: true, trim: true },
-    // clubs: { type: String, required: true, trim: true },
-    // aim: { type: String, required: true, trim: true },
-    // believe: { type: String, required: true, trim: true },
-    // expect: { type: String, required: true, trim: true },
-    // domain: { type: [String], required: true, default: [] },
+    cgpa: { type: String, required: true, trim: true },
+    back: { type: String, required: true, trim: true },
+    summary: { type: String, required: true, trim: true },
+    clubs: { type: String, required: true, trim: true },
+    aim: { type: String, required: true, trim: true },
+    believe: { type: String, required: true, trim: true },
+    expect: { type: String, required: true, trim: true },
+    domain: { type: [String], required: true, default: [] },
     //new end
 
     qrCode: {
@@ -134,4 +134,9 @@ comment: { type: String, default: "" },
   }
 );
 
-export default mongoose.models.Students || mongoose.model<IStudent>('Students', StudentSchema);
+// Delete cached model in dev to pick up schema changes
+if (mongoose.models.Students) {
+  delete mongoose.models.Students;
+}
+
+export default mongoose.model<IStudent>('Students', StudentSchema);
