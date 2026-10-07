@@ -240,10 +240,7 @@ export default function RegisterPage() {
                           className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
                         >
                           <option value="">Select Year</option>
-                          <option value="1">1st</option>
                           <option value="2">2nd</option>
-                          <option value="3">3rd</option>
-                          <option value="4">4th</option>
                         </select>
                       </FormControl>
                       <FormMessage />
