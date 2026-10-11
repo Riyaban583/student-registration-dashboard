@@ -41,30 +41,117 @@ interface QuestionItem {
 }
 
 const BRANCH_OPTIONS = [
-  "All Branches",
-  "CSE",
-  "ECE",
-  "ME",
-  "CE",
-  "EE",
-  "IT",
-  "PCE",
-  "PE",
-  "AE",
-  "EIC",
-  "CHE",
-  "P&I",
-  "Other",
+  { value: "All Branches", label: "🎓 All Branches" },
+  { value: "CSE", label: "CSE - Computer Science" },
+  { value: "ECE", label: "ECE - Electronics & Comm." },
+  { value: "EE", label: "EE - Electrical Engineering" },
+  { value: "ME", label: "ME - Mechanical Engineering" },
+  { value: "CE", label: "CE - Civil Engineering" },
+  { value: "EIC", label: "EIC - Instrumentation & Control" },
+  { value: "CHE", label: "CHE - Chemical Engineering" },
+  { value: "IT", label: "IT - Information Technology" },
+  { value: "PCE", label: "PCE - Petrochemical Engg." },
+  { value: "PE", label: "PE - Petroleum Engineering" },
+  { value: "AE", label: "AE - Aeronautical Engg." },
+  { value: "P&I", label: "P&I - Production & Industrial" },
+  { value: "Other", label: "Other Branches" },
 ];
+
+const BRANCH_SYNONYMS: Record<string, string[]> = {
+  cse: ["cse", "computer science", "computer engineering", "cs", "computing", "software"],
+  it: ["it", "information technology"],
+  ece: ["ece", "electronics and communication", "electronics & communication", "electronics communication"],
+  ee: ["ee", "electrical", "electrical engineering"],
+  eic: [
+    "eic",
+    "instrumentation",
+    "electronics instrumentation",
+    "electronics and instrumentation",
+    "electronics & instrumentation",
+    "instrumentation engineering",
+    "ice",
+    "control engineering",
+  ],
+  me: ["me", "mechanical", "mechanical engineering"],
+  ce: ["ce", "civil", "civil engineering"],
+  che: ["che", "chemical", "chemical engineering", "chem"],
+  pce: ["pce", "petrochemical", "petrochemical engineering"],
+  pe: ["pe", "petroleum", "petroleum engineering"],
+  ae: ["ae", "aeronautical", "aeronautical engineering", "automobile"],
+  "p&i": ["p&i", "pi", "production", "production & industrial", "production and industrial", "industrial engineering"],
+};
+
+function matchesBranch(questionBranch: string, selectedBranch: string): boolean {
+  if (!selectedBranch || selectedBranch === "All" || selectedBranch === "All Branches") {
+    return true;
+  }
+
+  const qBranch = (questionBranch || "").trim().toLowerCase();
+  const sBranch = (selectedBranch || "").trim().toLowerCase();
+
+  // If question was open to all branches (e.g. general aptitude)
+  if (
+    qBranch === "all" ||
+    qBranch === "all branches" ||
+    qBranch.includes("all branch") ||
+    qBranch.includes("all eligible")
+  ) {
+    return true;
+  }
+
+  // Direct exact match
+  if (qBranch === sBranch) {
+    return true;
+  }
+
+  // Get synonyms / keywords for the selected branch code
+  let keywords: string[] = [sBranch];
+  for (const [key, synonyms] of Object.entries(BRANCH_SYNONYMS)) {
+    if (key === sBranch || synonyms.includes(sBranch)) {
+      keywords = synonyms;
+      break;
+    }
+  }
+
+  // Check if any keyword matches words in qBranch (even in comma-separated branch lists)
+  return keywords.some((kw) => {
+    if (kw.length <= 3) {
+      return new RegExp("(^|[^a-z0-9])" + kw + "([^a-z0-9]|$)", "i").test(qBranch);
+    }
+    return qBranch.includes(kw);
+  });
+}
 
 const ROUND_OPTIONS = [
   "All Rounds",
-  "Coding / Online Assessment",
-  "Technical Interview",
+  "Online Test",
   "Aptitude Test",
+  "Technical Interview",
+  "Coding / Online Assessment",
   "HR Interview",
   "Group Discussion",
 ];
+
+function matchesRound(questionRound: string, selectedRound: string): boolean {
+  if (!selectedRound || selectedRound === "All Rounds" || selectedRound === "All") {
+    return true;
+  }
+
+  const qRound = (questionRound || "").trim().toLowerCase();
+  const sRound = selectedRound.trim().toLowerCase();
+
+  if (qRound === sRound) return true;
+
+  // Smart group matches
+  if (sRound.includes("aptitude") && qRound.includes("aptitude")) return true;
+  if (sRound.includes("online") && (qRound.includes("online") || qRound.includes("coding") || qRound.includes("assessment"))) return true;
+  if (sRound.includes("coding") && (qRound.includes("online") || qRound.includes("coding") || qRound.includes("assessment"))) return true;
+  if (sRound.includes("technical") && qRound.includes("technical")) return true;
+  if (sRound.includes("hr") && qRound.includes("hr")) return true;
+  if (sRound.includes("discussion") && qRound.includes("discussion")) return true;
+
+  return qRound.includes(sRound) || sRound.includes(qRound);
+}
 
 export default function PlacementQuestionsPage() {
   const { toast } = useToast();
@@ -128,22 +215,16 @@ export default function PlacementQuestionsPage() {
   // Filter logic
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
-      // Branch filter: if selected is not "All Branches", match question branch or questions open to "All"
-      const branchMatch =
-        selectedBranch === "All Branches" ||
-        q.branch.toLowerCase() === selectedBranch.toLowerCase() ||
-        q.branch.toLowerCase() === "all" ||
-        q.branch.toLowerCase() === "all branches";
+      // Branch filter: smart matching (e.g. EIC matches Instrumentation, CHE matches Chemical, etc.)
+      const branchMatch = matchesBranch(q.branch, selectedBranch);
 
       // Company filter
       const companyMatch =
         selectedCompany === "All Companies" ||
         q.company.toLowerCase() === selectedCompany.toLowerCase();
 
-      // Round filter
-      const roundMatch =
-        selectedRound === "All Rounds" ||
-        q.round.toLowerCase() === selectedRound.toLowerCase();
+      // Round filter: smart matching (e.g. Aptitude Test matches sub-types)
+      const roundMatch = matchesRound(q.round, selectedRound);
 
       // Search query (matches question text, company, role, tags)
       const qText = (q.question || "").toLowerCase();
@@ -280,8 +361,8 @@ export default function PlacementQuestionsPage() {
                   className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   {BRANCH_OPTIONS.map((b) => (
-                    <option key={b} value={b}>
-                      {b === "All Branches" ? "🎓 All Branches" : b}
+                    <option key={b.value} value={b.value}>
+                      {b.label}
                     </option>
                   ))}
                 </select>

@@ -78,20 +78,58 @@ export async function getDriveQuestions(filters?: {
     const query: any = {};
 
     if (filters?.branch && filters.branch !== 'All' && filters.branch !== 'All Branches') {
-      // Include questions specifically for this branch or targeted for "All Branches"
+      const bKey = filters.branch.trim().toLowerCase();
+      const branchSynonyms: Record<string, string[]> = {
+        cse: ['cse', 'computer science', 'computer engineering', 'cs'],
+        it: ['it', 'information technology'],
+        ece: ['ece', 'electronics and communication', 'electronics & communication'],
+        ee: ['ee', 'electrical', 'electrical engineering'],
+        eic: ['eic', 'instrumentation', 'electronics instrumentation', 'instrumentation engineering', 'ice'],
+        me: ['me', 'mechanical', 'mechanical engineering'],
+        ce: ['ce', 'civil', 'civil engineering'],
+        che: ['che', 'chemical', 'chemical engineering'],
+        pce: ['pce', 'petrochemical'],
+        pe: ['pe', 'petroleum'],
+        ae: ['ae', 'aeronautical', 'automobile'],
+        'p&i': ['p&i', 'pi', 'production'],
+      };
+
+      let keywords: string[] = [filters.branch.trim()];
+      for (const [key, syns] of Object.entries(branchSynonyms)) {
+        if (key === bKey || syns.some((s) => s.toLowerCase() === bKey)) {
+          keywords = syns;
+          break;
+        }
+      }
+
+      const regexConditions = keywords.map((kw) => {
+        if (kw.length <= 3) {
+          return {
+            branch: new RegExp(
+              `(^|[^a-z0-9])${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`,
+              'i'
+            ),
+          };
+        }
+        return {
+          branch: new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+        };
+      });
+
       query.$or = [
-        { branch: filters.branch },
         { branch: 'All Branches' },
         { branch: 'All' },
+        { branch: new RegExp('^all', 'i') },
+        ...regexConditions,
       ];
     }
 
-    if (filters?.company && filters.company !== 'All') {
+    if (filters?.company && filters.company !== 'All' && filters.company !== 'All Companies') {
       query.company = new RegExp(`^${filters.company.trim()}$`, 'i');
     }
 
-    if (filters?.round && filters.round !== 'All') {
-      query.round = filters.round;
+    if (filters?.round && filters.round !== 'All' && filters.round !== 'All Rounds') {
+      query.round = new RegExp(filters.round.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     }
 
     if (filters?.search && filters.search.trim()) {
