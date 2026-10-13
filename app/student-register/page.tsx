@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getEvents } from "../actions/events";
+import { getRegistrationStatus } from "@/app/actions/settings";
 import {
   Card,
   CardContent,
@@ -25,7 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { GraduationCap, ArrowLeft } from "lucide-react";
+import { GraduationCap, ArrowLeft, Lock, AlertCircle, User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { registerStudents } from "@/app/actions/user";
 
@@ -68,15 +69,33 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [events, setEvents] = useState<any>([]);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [closedNotice, setClosedNotice] = useState("");
 
   useEffect(() => {
-    const getEventData = async () => {
-      const res = await getEvents();
-      if (res) {
-        setEvents(res);
+    const initData = async () => {
+      try {
+        const [eventRes, statusRes] = await Promise.all([
+          getEvents(),
+          getRegistrationStatus(),
+        ]);
+        if (eventRes) {
+          setEvents(eventRes);
+        }
+        if (statusRes) {
+          setIsRegistrationOpen(statusRes.isOpen);
+          if (statusRes.closedMessage) {
+            setClosedNotice(statusRes.closedMessage);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading registration page data:", err);
+      } finally {
+        setIsCheckingStatus(false);
       }
     };
-    getEventData();
+    initData();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -150,7 +169,62 @@ export default function RegisterPage() {
         </div>
       </header>
 
-       <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+      {isCheckingStatus ? (
+        <main className="flex-1 container mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
+          <div className="p-8 rounded-2xl border bg-card/60 backdrop-blur-sm shadow-sm flex flex-col items-center max-w-sm w-full space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div className="space-y-1">
+              <h3 className="font-semibold text-base">Loading Registration Portal</h3>
+              <p className="text-xs text-muted-foreground">Checking registration status...</p>
+            </div>
+          </div>
+        </main>
+      ) : !isRegistrationOpen ? (
+        <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+          <Card className="w-full max-w-md border-rose-500/20 shadow-2xl bg-card">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 mb-4 shadow-inner">
+                <Lock className="h-8 w-8" />
+              </div>
+              <div className="inline-block mx-auto mb-2">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                  Registrations Closed
+                </span>
+              </div>
+              <CardTitle className="text-2xl font-bold tracking-tight">Registration is Closed</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground mt-2">
+                {closedNotice || "Student registrations are currently closed by the Placement Cell."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-2">
+              <div className="rounded-lg bg-muted/40 p-4 border text-xs text-muted-foreground space-y-2">
+                <div className="flex items-center gap-2 font-medium text-foreground">
+                  <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                  Already Registered?
+                </div>
+                <p>
+                  If you have already submitted your form earlier, your record and QR code remain intact. You can view your details and QR code via the Student Dashboard.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Link href="/student-dashboard" className="flex-1">
+                  <Button variant="default" className="w-full">
+                    <User className="h-4 w-4 mr-2" />
+                    Student Dashboard
+                  </Button>
+                </Link>
+                <Link href="/" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Home
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      ) : (
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">PTP Core Team Recruitment</CardTitle>
@@ -490,14 +564,7 @@ export default function RegisterPage() {
           </CardFooter>
         </Card>
       </main> 
-
-                {/* <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
-        <Card className="w-full max-w-lg md:max-w-xl lg:max-w-2xl text-center">
-          <h1 className="text-xl font-bold">Oop's, It's too Late!!</h1>
-          <h3 className="text-lg font-semibold">Registration Closed</h3>
-        </Card>
-
-                 </main> */}
+      )}
 
       <footer className="border-t py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground flex-col flex items-center">

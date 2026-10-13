@@ -22,6 +22,7 @@ import { markAttendance, getAllUsers, logout } from '@/app/actions/user';
 import EventManager from '@/components/event/Events';
 import { useQrScanner } from '@/hooks/useQrScanner';
 import { QrScannerCard } from '@/components/scanner/QrScannerCard';
+import RegistrationToggleCard from '@/components/admin/RegistrationToggleCard';
 
 export default function ScannerPage() {
   const router = useRouter();
@@ -172,6 +173,9 @@ export default function ScannerPage() {
               </Button>
             </Link>
           </div>
+
+          <RegistrationToggleCard />
+
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
