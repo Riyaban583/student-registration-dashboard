@@ -89,8 +89,10 @@
 
 
 "use client"
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { getRegistrationStatus } from '@/app/actions/settings';
 // import { useRouter } from 'next/router';
 import {
   Card,
@@ -103,6 +105,15 @@ import {
 import { GraduationCap, User, ShieldCheck, HelpCircle, BookOpen } from 'lucide-react';
 
 export default function Home() {
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+
+  useEffect(() => {
+    getRegistrationStatus().then((res) => {
+      if (res) {
+        setIsRegistrationOpen(res.isOpen);
+      }
+    });
+  }, []);
 
   // const router = useRouter();
   return (
@@ -125,7 +136,14 @@ export default function Home() {
           </p>
           <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
             <Link href="/student-register">
-              <Button size="lg" className="w-full sm:w-auto">Student Registration</Button>
+              <Button size="lg" className="w-full sm:w-auto" variant={isRegistrationOpen ? "default" : "outline"}>
+                Student Registration
+                {!isRegistrationOpen && (
+                  <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                    Closed
+                  </span>
+                )}
+              </Button>
             </Link>
             <Link href="/placement-questions">
               <Button size="lg" variant="default" className="w-full sm:w-auto">

@@ -3,6 +3,7 @@
 import { connectToDatabase } from '@/lib/db';
 import User from '@/models/User';
 import Students from '@/models/Students';
+import Setting from '@/models/Setting';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { generateToken } from '@/lib/auth';
@@ -373,6 +374,15 @@ export async function registerStudents(studentData: {
 }) {
   try {
     await connectToDatabase();
+
+    // Check if student registration is open
+    const statusSetting = (await Setting.findOne({ key: 'student_registration' }).lean()) as any;
+    if (statusSetting && statusSetting.value && statusSetting.value.isOpen === false) {
+      return {
+        success: false,
+        error: statusSetting.value.closedMessage || 'Registration is currently closed by the Placement Cell.'
+      };
+    }
 
     // Check if user already exists
     const existingUser = await Students.findOne({
