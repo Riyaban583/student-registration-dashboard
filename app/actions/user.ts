@@ -361,7 +361,7 @@ export async function logout() {
 export async function registerStudents(studentData: {
   name: string, email: string, rollNumber: string, universityRollNo: string, eventName: string, branch: string, year: string, phoneNumber: string,
   //new ga
-  cgpa: string,  
+  cgpa: string,
   back: string,
   summary: string,
   clubs: string,
@@ -544,6 +544,8 @@ export const getAllRecruitments = async () => {
         expect: user.expect || "",
         domain: user.domain || [],
         review: user.review ?? null,
+        reviewDomain1: user.reviewDomain1 ?? null,
+        reviewDomain2: user.reviewDomain2 ?? null,
         comment: user.comment ?? "",
         roundOneAttendance: user.roundOneAttendance,
         roundTwoAttendance: user.roundTwoAttendance,
@@ -560,6 +562,8 @@ export const getAllRecruitments = async () => {
 interface ReviewData {
   studentId: string;
   review?: number;
+  reviewDomain1?: number | null;
+  reviewDomain2?: number | null;
   comment?: string;
   roundOneAttendance?: boolean;
   roundTwoAttendance?: boolean;
@@ -572,6 +576,8 @@ export const review = async (data: ReviewData) => {
     await connectToDatabase();
     const students = await Students.findByIdAndUpdate(data.studentId, {
       review: data.review ?? null,
+      reviewDomain1: data.reviewDomain1 ?? null,
+      reviewDomain2: data.reviewDomain2 ?? null,
       comment: data.comment ?? "",
 
       roundOneAttendance: data.roundOneAttendance,
@@ -588,7 +594,7 @@ export const review = async (data: ReviewData) => {
       return { success: false, error: "student not found" }
     }
 
-    return { success: true, students }
+    return { success: true };
   } catch (error) {
     console.error("Error reviewing student:", error);
     return { success: false, error: "Failed to review student" };

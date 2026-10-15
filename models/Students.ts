@@ -24,16 +24,18 @@ export interface IStudent extends Document {
   qrCode: string;
   scanId: string;
 
-  attendance: { 
+  attendance: {
     date: Date;
     present: boolean;
   }[];
 
   //  New fields for review //aditya
-  
-    review?:number | null;
-    comment:string | ""
-  
+
+  review?: number | null;
+  reviewDomain1?: number | null;
+  reviewDomain2?: number | null;
+  comment: string | ""
+
 
   //  New fields for rounds
   roundOneAttendance?: boolean;
@@ -60,33 +62,33 @@ const StudentSchema = new Schema<IStudent>(
       trim: true,
       lowercase: true,
     },
-    rollNumber: { 
+    rollNumber: {
       type: String,
       required: [true, 'Please provide a roll number'],
       unique: true,
       trim: true,
     },
-    universityRollNo: { 
+    universityRollNo: {
       type: String,
       required: [true, 'Please provide university roll number'],
       trim: true,
     },
-    eventName: {  
+    eventName: {
       type: String,
       required: [true, 'Please provide event name'],
       trim: true,
     },
-    branch: {  
+    branch: {
       type: String,
       required: [true, 'Please provide branch'],
       trim: true,
     },
-    year: {  
+    year: {
       type: String,
       required: [true, 'Please provide year'],
       trim: true,
     },
-    phoneNumber: {  
+    phoneNumber: {
       type: String,
       required: [true, 'Please provide phone number'],
       trim: true,
@@ -125,7 +127,9 @@ const StudentSchema = new Schema<IStudent>(
 
     //  New fields Aditya
     review: { type: Number, default: null },  // marks only
-comment: { type: String, default: "" },
+    reviewDomain1: { type: Number, default: null },  // domain 1 marks
+    reviewDomain2: { type: Number, default: null },  // domain 2 marks
+    comment: { type: String, default: "" },
     roundOneAttendance: { type: Boolean, default: false },
     roundTwoAttendance: { type: Boolean, default: false },
     roundOneQualified: { type: Boolean, default: false },
