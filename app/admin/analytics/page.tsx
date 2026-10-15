@@ -50,7 +50,7 @@ export default function AnalyticsDashboard() {
   // Export to Excel
   const exportToExcel = () => {
     if (students.length === 0) return;
-    
+
     // Prepare data for excel
     const excelData = students.map((s, index) => ({
       "S.No": index + 1,
@@ -76,10 +76,10 @@ export default function AnalyticsDashboard() {
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
-    
+
     // Generate excel file
     XLSX.writeFile(workbook, "PTP_Recruitment_Data.xlsx");
-    
+
     toast({
       title: "Success!",
       description: "Excel file downloaded successfully.",
@@ -95,7 +95,7 @@ export default function AnalyticsDashboard() {
 
   // Calculate Metrics based on FILTERED data
   const totalRegistrations = filteredStudents.length;
-  
+
   // Calculate Branch Data
   const branchCounts = filteredStudents.reduce((acc: any, student) => {
     if (student.branch) {
@@ -136,7 +136,7 @@ export default function AnalyticsDashboard() {
           </h1>
           <p className="text-gray-400 mt-1">PTP Core Team Recruitment Insights</p>
         </div>
-        
+
         <div className="flex gap-3">
           <Button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20">
             <Download className="h-4 w-4 mr-2" />
@@ -169,7 +169,7 @@ export default function AnalyticsDashboard() {
               <p className="text-gray-400 text-sm font-medium mb-1">Total Registrations</p>
               <h3 className="text-4xl font-extrabold text-white">{totalRegistrations}</h3>
             </div>
-            
+
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10"><Building size={80} /></div>
               <p className="text-gray-400 text-sm font-medium mb-1">Total Branches</p>
@@ -183,31 +183,31 @@ export default function AnalyticsDashboard() {
             </div>
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-center">
-               <p className="text-gray-400 text-sm font-medium mb-3">Quick Filters</p>
-               <div className="space-y-2">
-                 <select 
-                   className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm focus:ring-blue-500 text-white"
-                   value={branchFilter}
-                   onChange={(e) => setBranchFilter(e.target.value)}
-                 >
-                   <option value="All">All Branches</option>
-                   {uniqueBranches.map((b: any) => <option key={b} value={b}>{b}</option>)}
-                 </select>
-                 <select 
-                   className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm focus:ring-blue-500 text-white"
-                   value={domainFilter}
-                   onChange={(e) => setDomainFilter(e.target.value)}
-                 >
-                   <option value="All">All Domains</option>
-                   {uniqueDomains.map((d: any) => <option key={d} value={d}>{d}</option>)}
-                 </select>
-               </div>
+              <p className="text-gray-400 text-sm font-medium mb-3">Quick Filters</p>
+              <div className="space-y-2">
+                <select
+                  className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm focus:ring-blue-500 text-white"
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                >
+                  <option value="All">All Branches</option>
+                  {uniqueBranches.map((b: any) => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select
+                  className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm focus:ring-blue-500 text-white"
+                  value={domainFilter}
+                  onChange={(e) => setDomainFilter(e.target.value)}
+                >
+                  <option value="All">All Domains</option>
+                  {uniqueDomains.map((d: any) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Charts Row 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
+
             {/* Domain Popularity (Pie Chart) */}
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl">
               <h3 className="text-lg font-semibold text-gray-200 mb-6 flex items-center">
@@ -232,7 +232,7 @@ export default function AnalyticsDashboard() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px' }}
                         itemStyle={{ color: '#fff' }}
                       />
@@ -255,10 +255,10 @@ export default function AnalyticsDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={branchData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                      <XAxis dataKey="name" stroke="#9ca3af" tick={{fill: '#9ca3af'}} />
-                      <YAxis stroke="#9ca3af" tick={{fill: '#9ca3af'}} />
-                      <Tooltip 
-                        cursor={{fill: '#374151', opacity: 0.4}}
+                      <XAxis dataKey="name" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
+                      <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
+                      <Tooltip
+                        cursor={{ fill: '#374151', opacity: 0.4 }}
                         contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
                       />
                       <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
@@ -278,51 +278,51 @@ export default function AnalyticsDashboard() {
 
           {/* Table Preview */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl overflow-hidden">
-             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-200 flex items-center">
-                  <GraduationCap className="mr-2 h-5 w-5 text-green-400" />
-                  Recent Registrations Preview
-                </h3>
-                <span className="text-sm text-gray-400">Showing top 10</span>
-             </div>
-             
-             <div className="overflow-x-auto">
-               <table className="w-full text-sm text-left text-gray-300">
-                 <thead className="text-xs text-gray-400 uppercase bg-gray-800">
-                   <tr>
-                     <th className="px-4 py-3 rounded-tl-lg">Name</th>
-                     <th className="px-4 py-3">Branch</th>
-                     <th className="px-4 py-3">CGPA</th>
-                     <th className="px-4 py-3">Domains</th>
-                     <th className="px-4 py-3 rounded-tr-lg">Action</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {filteredStudents.slice(0, 10).map((student, idx) => (
-                     <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
-                       <td className="px-4 py-3 font-medium text-white">{student.name}</td>
-                       <td className="px-4 py-3">{student.branch}</td>
-                       <td className="px-4 py-3">
-                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${Number(student.cgpa) >= 8 ? 'bg-green-900/50 text-green-400' : 'bg-gray-800 text-gray-300'}`}>
-                           {student.cgpa || 'N/A'}
-                         </span>
-                       </td>
-                       <td className="px-4 py-3 truncate max-w-xs">{student.domain?.join(", ")}</td>
-                       <td className="px-4 py-3">
-                         <Link href="/admin/scanner/review" className="text-blue-400 hover:text-blue-300 hover:underline">
-                           Review
-                         </Link>
-                       </td>
-                     </tr>
-                   ))}
-                   {filteredStudents.length === 0 && (
-                     <tr>
-                       <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No students match the current filters</td>
-                     </tr>
-                   )}
-                 </tbody>
-               </table>
-             </div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-200 flex items-center">
+                <GraduationCap className="mr-2 h-5 w-5 text-green-400" />
+                Recent Registrations Preview
+              </h3>
+              <span className="text-sm text-gray-400">Showing top 10</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-300">
+                <thead className="text-xs text-gray-400 uppercase bg-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 rounded-tl-lg">Name</th>
+                    <th className="px-4 py-3">Branch</th>
+                    <th className="px-4 py-3">CGPA</th>
+                    <th className="px-4 py-3">Domains</th>
+                    <th className="px-4 py-3 rounded-tr-lg">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.slice(0, 10).map((student, idx) => (
+                    <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-white">{student.name}</td>
+                      <td className="px-4 py-3">{student.branch}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${Number(student.cgpa) >= 8 ? 'bg-green-900/50 text-green-400' : 'bg-gray-800 text-gray-300'}`}>
+                          {student.cgpa || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 truncate max-w-xs">{student.domain?.join(", ")}</td>
+                      <td className="px-4 py-3">
+                        <Link href="/admin/scanner/review" className="text-blue-400 hover:text-blue-300 hover:underline">
+                          Review
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredStudents.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No students match the current filters</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
