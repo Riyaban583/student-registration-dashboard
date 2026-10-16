@@ -4,13 +4,49 @@ import { connectToDatabase } from '@/lib/db';
 import User from '@/models/User';
 import Students from '@/models/Students';
 import Setting from '@/models/Setting';
+import ReviewLog from '@/models/ReviewLog';
+import AdminDevice from '@/models/AdminDevice';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { generateToken } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
 import { toZonedTime, format } from "date-fns-tz";
+
+function parseUserAgent(ua: string) {
+  let browser = 'Unknown Browser';
+  let os = 'Unknown OS';
+  let deviceType = 'Desktop';
+
+  if (!ua) return { browser, os, deviceType };
+
+  if (/windows phone/i.test(ua)) os = 'Windows Phone';
+  else if (/win(dows|98|nt|2000|xp|vista|7|8|10|11)/i.test(ua)) os = 'Windows';
+  else if (/ipad/i.test(ua)) os = 'iPadOS';
+  else if (/iphone|ipod/i.test(ua)) os = 'iOS';
+  else if (/android/i.test(ua)) os = 'Android';
+  else if (/macintosh|mac os x/i.test(ua)) os = 'macOS';
+  else if (/linux/i.test(ua)) os = 'Linux';
+  else if (/cros/i.test(ua)) os = 'ChromeOS';
+
+  if (/ipad|tablet/i.test(ua)) {
+    deviceType = 'Tablet';
+  } else if (/mobi|iphone|ipod|android/i.test(ua)) {
+    deviceType = 'Mobile';
+  } else {
+    deviceType = 'Desktop';
+  }
+
+  if (/edg/i.test(ua)) browser = 'Edge';
+  else if (/opr|opera/i.test(ua)) browser = 'Opera';
+  else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+  else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+  else if (/safari/i.test(ua)) browser = 'Safari';
+  else if (/msie|trident/i.test(ua)) browser = 'Internet Explorer';
+
+  return { browser, os, deviceType };
+}
 
 export async function registerUser(userData: { name: string; email: string; rollNumber: string; branch: string }) {
   try {
@@ -569,35 +605,272 @@ interface ReviewData {
   roundTwoAttendance?: boolean;
   roundOneQualified?: boolean;
   roundTwoQualified?: boolean;
+  clientInfo?: {
+    deviceId?: string;
+    deviceName?: string;
+  };
 }
 
 export const review = async (data: ReviewData) => {
   try {
     await connectToDatabase();
-    const students = await Students.findByIdAndUpdate(data.studentId, {
-      review: data.review ?? null,
-      reviewDomain1: data.reviewDomain1 ?? null,
-      reviewDomain2: data.reviewDomain2 ?? null,
-      comment: data.comment ?? "",
 
-      roundOneAttendance: data.roundOneAttendance,
-      roundTwoAttendance: data.roundTwoAttendance,
-      roundOneQualified: data.roundOneQualified,
-      roundTwoQualified: data.roundTwoQualified,
-
-    },
-
-      { new: true }
-    )
-
-    if (!students) {
-      return { success: false, error: "student not found" }
+    const currentStudent = await Students.findById(data.studentId);
+    if (!currentStudent) {
+      return { success: false, error: "Student not found" };
     }
 
+    const changes: string[] = [];
+    const prevDomain1 = currentStudent.reviewDomain1 ?? null;
+    const newDomain1 = data.reviewDomain1 ?? null;
+    if (prevDomain1 !== newDomain1) {
+      changes.push(`Domain 1: ${prevDomain1 !== null ? prevDomain1 : 'None'} → ${newDomain1 !== null ? newDomain1 : 'None'}`);
+    }
+
+    const prevDomain2 = currentStudent.reviewDomain2 ?? null;
+    const newDomain2 = data.reviewDomain2 ?? null;
+    if (prevDomain2 !== newDomain2) {
+      changes.push(`Domain 2: ${prevDomain2 !== null ? prevDomain2 : 'None'} → ${newDomain2 !== null ? newDomain2 : 'None'}`);
+    }
+
+    const prevComment = (currentStudent.comment || "").trim();
+    const newComment = (data.comment || "").trim();
+    if (prevComment !== newComment) {
+      changes.push(`Comment: "${prevComment || '(empty)'}" → "${newComment || '(empty)'}"`);
+    }
+
+    const prevR1Att = !!currentStudent.roundOneAttendance;
+    const newR1Att = !!data.roundOneAttendance;
+    if (prevR1Att !== newR1Att) {
+      changes.push(`Round 1 Attendance: ${prevR1Att ? 'Present' : 'Absent'} → ${newR1Att ? 'Present' : 'Absent'}`);
+    }
+
+    const prevR2Att = !!currentStudent.roundTwoAttendance;
+    const newR2Att = !!data.roundTwoAttendance;
+    if (prevR2Att !== newR2Att) {
+      changes.push(`Round 2 Attendance: ${prevR2Att ? 'Present' : 'Absent'} → ${newR2Att ? 'Present' : 'Absent'}`);
+    }
+
+    const prevR1Qual = !!currentStudent.roundOneQualified;
+    const newR1Qual = !!data.roundOneQualified;
+    if (prevR1Qual !== newR1Qual) {
+      changes.push(`Round 1 Qualified: ${prevR1Qual ? 'Yes' : 'No'} → ${newR1Qual ? 'Yes' : 'No'}`);
+    }
+
+    const prevR2Qual = !!currentStudent.roundTwoQualified;
+    const newR2Qual = !!data.roundTwoQualified;
+    if (prevR2Qual !== newR2Qual) {
+      changes.push(`Round 2 Qualified: ${prevR2Qual ? 'Yes' : 'No'} → ${newR2Qual ? 'Yes' : 'No'}`);
+    }
+
+    let ip = 'Unknown IP';
+    let rawUserAgent = '';
+    try {
+      const headerList = headers();
+      const forwarded = headerList.get('x-forwarded-for');
+      const realIp = headerList.get('x-real-ip');
+      ip = forwarded ? forwarded.split(',')[0].trim() : (realIp || 'Unknown IP');
+      rawUserAgent = headerList.get('user-agent') || '';
+    } catch (e) {
+      console.warn("Could not read headers in review action:", e);
+    }
+
+    const { browser, os, deviceType } = parseUserAgent(rawUserAgent);
+    const friendlyDeviceName = data.clientInfo?.deviceName || `${os} ${deviceType} (${browser})`;
+
+    // Append-only immutable log: saved only if actual changes occurred
+    if (changes.length > 0) {
+      await ReviewLog.create({
+        studentId: String(currentStudent._id),
+        studentName: currentStudent.name,
+        studentRollNumber: currentStudent.rollNumber,
+        previous: {
+          reviewDomain1: prevDomain1,
+          reviewDomain2: prevDomain2,
+          comment: prevComment,
+          roundOneAttendance: prevR1Att,
+          roundTwoAttendance: prevR2Att,
+          roundOneQualified: prevR1Qual,
+          roundTwoQualified: prevR2Qual,
+        },
+        updated: {
+          reviewDomain1: newDomain1,
+          reviewDomain2: newDomain2,
+          comment: newComment,
+          roundOneAttendance: newR1Att,
+          roundTwoAttendance: newR2Att,
+          roundOneQualified: newR1Qual,
+          roundTwoQualified: newR2Qual,
+        },
+        changes,
+        deviceInfo: {
+          deviceName: friendlyDeviceName,
+          deviceId: data.clientInfo?.deviceId || '',
+          browser,
+          os,
+          deviceType,
+          ip,
+          rawUserAgent,
+        },
+      });
+    }
+
+    // Update student document
+    currentStudent.review = data.review ?? null;
+    currentStudent.reviewDomain1 = newDomain1;
+    currentStudent.reviewDomain2 = newDomain2;
+    currentStudent.comment = newComment;
+    currentStudent.roundOneAttendance = newR1Att;
+    currentStudent.roundTwoAttendance = newR2Att;
+    currentStudent.roundOneQualified = newR1Qual;
+    currentStudent.roundTwoQualified = newR2Qual;
+    await currentStudent.save();
+
+    revalidatePath('/admin/scanner/review');
     return { success: true };
   } catch (error) {
     console.error("Error reviewing student:", error);
     return { success: false, error: "Failed to review student" };
+  }
+};
+
+// Tamper-proof, read-only audit log fetchers (NO delete or update actions exist)
+export const getStudentReviewLogs = async (studentId: string) => {
+  try {
+    await connectToDatabase();
+    const logs = await ReviewLog.find({ studentId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return {
+      success: true,
+      logs: logs.map((log: any) => ({
+        id: String(log._id),
+        studentId: log.studentId,
+        studentName: log.studentName,
+        studentRollNumber: log.studentRollNumber,
+        changes: log.changes || [],
+        previous: log.previous || {},
+        updated: log.updated || {},
+        deviceInfo: log.deviceInfo || {},
+        createdAt: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching review logs:", error);
+    return { success: false, error: "Failed to fetch logs" };
+  }
+};
+
+export const getAllReviewLogs = async (limit: number = 100) => {
+  try {
+    await connectToDatabase();
+    const logs = await ReviewLog.find({})
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return {
+      success: true,
+      logs: logs.map((log: any) => ({
+        id: String(log._id),
+        studentId: log.studentId,
+        studentName: log.studentName,
+        studentRollNumber: log.studentRollNumber,
+        changes: log.changes || [],
+        previous: log.previous || {},
+        updated: log.updated || {},
+        deviceInfo: log.deviceInfo || {},
+        createdAt: log.createdAt ? log.createdAt.toISOString() : new Date().toISOString(),
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching all review logs:", error);
+    return { success: false, error: "Failed to fetch all review logs" };
+  }
+};
+
+export async function registerAdminDevice(data: {
+  deviceId: string;
+  adminName: string;
+}) {
+  try {
+    await connectToDatabase();
+    if (!data.deviceId || !data.adminName || !data.adminName.trim()) {
+      return { success: false, error: "Device ID and Admin/Reviewer Name are required" };
+    }
+
+    let ip = 'Unknown IP';
+    let rawUserAgent = '';
+    try {
+      const headerList = headers();
+      const forwarded = headerList.get('x-forwarded-for');
+      const realIp = headerList.get('x-real-ip');
+      ip = forwarded ? forwarded.split(',')[0].trim() : (realIp || 'Unknown IP');
+      rawUserAgent = headerList.get('user-agent') || '';
+    } catch (e) {
+      console.warn("Could not read headers in registerAdminDevice:", e);
+    }
+
+    const { browser, os, deviceType } = parseUserAgent(rawUserAgent);
+
+    const device = await AdminDevice.findOneAndUpdate(
+      { deviceId: data.deviceId },
+      {
+        $set: {
+          adminName: data.adminName.trim(),
+          deviceType,
+          os,
+          browser,
+          ip,
+          rawUserAgent,
+          lastActiveAt: new Date(),
+        },
+        $setOnInsert: {
+          registeredAt: new Date(),
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    return {
+      success: true,
+      device: {
+        deviceId: device.deviceId,
+        adminName: device.adminName,
+        deviceType: device.deviceType,
+        os: device.os,
+        browser: device.browser,
+        ip: device.ip,
+      },
+    };
+  } catch (error) {
+    console.error("Error registering admin device:", error);
+    return { success: false, error: "Failed to register admin device" };
+  }
+}
+
+export async function getRegisteredAdminDevices() {
+  try {
+    await connectToDatabase();
+    const devices = await AdminDevice.find({}).sort({ lastActiveAt: -1 }).lean();
+    return {
+      success: true,
+      devices: devices.map((d: any) => ({
+        id: String(d._id),
+        deviceId: d.deviceId,
+        adminName: d.adminName,
+        deviceType: d.deviceType,
+        os: d.os,
+        browser: d.browser,
+        ip: d.ip,
+        registeredAt: d.registeredAt ? d.registeredAt.toISOString() : '',
+        lastActiveAt: d.lastActiveAt ? d.lastActiveAt.toISOString() : '',
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching registered devices:", error);
+    return { success: false, error: "Failed to fetch devices" };
   }
 }
 
