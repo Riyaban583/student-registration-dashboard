@@ -27,9 +27,11 @@ export function verifyToken(token: string) {
   }
 }
 
+export const AUTH_COOKIE_NAME = 'admin_session_token';
+
 export function getTokenFromCookies() {
   const cookieStore = cookies();
-  return cookieStore.get('auth-token')?.value;
+  return cookieStore.get(AUTH_COOKIE_NAME)?.value;
 }
 
 export function getUserFromToken() {

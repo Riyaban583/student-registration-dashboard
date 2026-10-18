@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
 
   // Drive questions management can be accessed by admin OR anyone with alumni access token
   if (path.startsWith('/admin/questions')) {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('admin_session_token')?.value;
     const alumniToken = request.cookies.get('alumni-access-token')?.value;
 
     let hasAdmin = false;
@@ -32,20 +32,28 @@ export function middleware(request: NextRequest) {
   const isAlumniRoute = path.startsWith('/alumni') && !path.startsWith('/alumni/login');
 
   // Get the token from cookies
-  const token = request.cookies.get('auth-token')?.value;
+  const token = request.cookies.get('admin_session_token')?.value;
 
   if (isAdminRoute) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('auth-token');
+      return response;
     }
 
     try {
       const decoded = Jwt.decode(token);
       if (!decoded || (typeof decoded !== 'object' || (decoded as any).role !== 'admin')) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('admin_session_token');
+        response.cookies.delete('auth-token');
+        return response;
       }
     } catch (error) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('admin_session_token');
+      response.cookies.delete('auth-token');
+      return response;
     }
   }
 

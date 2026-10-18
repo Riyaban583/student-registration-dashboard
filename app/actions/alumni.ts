@@ -5,6 +5,7 @@ import Alumni from '@/models/Alumni';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
+import { AUTH_COOKIE_NAME } from '@/lib/auth';
 
 export async function addAlumni(alumniData: {
   name: string;
@@ -22,7 +23,7 @@ export async function addAlumni(alumniData: {
     await connectToDatabase();
     
     // Check if user is admin
-    const token = cookies().get('auth-token')?.value;
+    const token = cookies().get(AUTH_COOKIE_NAME)?.value || cookies().get('auth-token')?.value;
     if (!token) {
       return { success: false, error: 'Unauthorized access' };
     }
@@ -57,7 +58,7 @@ export async function updateAlumni(id: string, alumniData: any) {
     await connectToDatabase();
     
     // Check if user is admin
-    const token = cookies().get('auth-token')?.value;
+    const token = cookies().get(AUTH_COOKIE_NAME)?.value || cookies().get('auth-token')?.value;
     if (!token) {
       return { success: false, error: 'Unauthorized access' };
     }
@@ -115,7 +116,7 @@ export async function deleteAlumni(id: string) {
         await connectToDatabase();
         
         // Check if user is admin
-        const token = cookies().get('auth-token')?.value;
+        const token = cookies().get(AUTH_COOKIE_NAME)?.value || cookies().get('auth-token')?.value;
         if (!token) {
           return { success: false, error: 'Unauthorized access' };
         }
