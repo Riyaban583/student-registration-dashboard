@@ -8,7 +8,7 @@ import ReviewLog from '@/models/ReviewLog';
 import AdminDevice from '@/models/AdminDevice';
 import { revalidatePath } from 'next/cache';
 import { cookies, headers } from 'next/headers';
-import { generateToken } from '@/lib/auth';
+import { generateToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
 import { sendMail } from '@/lib/email';
 import { registrationTemplate } from '@/mail/studentRegistration';
@@ -243,7 +243,7 @@ function escapeRegex(text: string) {
 export async function markAttendance(userId: string) {
   try {
     await connectToDatabase();
-    const token = cookies().get('auth-token')?.value;
+    const token = cookies().get(AUTH_COOKIE_NAME)?.value || cookies().get('auth-token')?.value;
     if (!token) {
       return { success: false, error: 'Unauthorized access' };
     }
@@ -356,25 +356,36 @@ export async function getAllUsers() {
 export async function adminLogin(username: string, password: string) {
   try {
     // Fixed admin credentials (in a real app, these would be in env variables)
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin@rtu';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'rtu@superadmin@2025';
+    const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || 'admin@rtu').replace(/^["']|["']$/g, '').trim();
+    const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || 'rtu@superadmin@2025').replace(/^["']|["']$/g, '').trim();
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    const cleanUser = (username || '').trim();
+    const cleanPass = (password || '').trim();
+
+    // Check credentials: exact match, or if Vercel stripped #2027 from rtu-ptp@2026#2027
+    const isPassMatch = 
+      cleanPass === ADMIN_PASSWORD || 
+      (cleanPass === `${ADMIN_PASSWORD}#2027`);
+
+    if (cleanUser === ADMIN_USERNAME && isPassMatch) {
       // Generate JWT token
       const token = generateToken({
         id: 'admin',
-        username,
+        username: cleanUser,
         role: 'admin'
       });
 
-      // Set cookie
+      // Clear legacy 7-day cookie
+      cookies().delete('auth-token');
+
+      // Set new session cookie (24 hours instead of 7 days)
       cookies().set({
-        name: 'auth-token',
+        name: AUTH_COOKIE_NAME,
         value: token,
         httpOnly: true,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 60 * 24, // 1 day
       });
 
       return { success: true };
@@ -388,6 +399,7 @@ export async function adminLogin(username: string, password: string) {
 }
 
 export async function logout() {
+  cookies().delete(AUTH_COOKIE_NAME);
   cookies().delete('auth-token');
   return { success: true };
 }

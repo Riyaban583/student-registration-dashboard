@@ -5,10 +5,11 @@ import DriveQuestion from '@/models/DriveQuestion';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
+import { AUTH_COOKIE_NAME } from '@/lib/auth';
 
 export async function checkQuestionsAccess(): Promise<boolean> {
   // 1. Check admin token
-  const token = cookies().get('auth-token')?.value;
+  const token = cookies().get(AUTH_COOKIE_NAME)?.value || cookies().get('auth-token')?.value;
   if (token) {
     try {
       const decoded: any = jwt.decode(token);
